@@ -1,6 +1,11 @@
 use strict;
 use HTTP::Daemon;
 use HTTP::Status;
+use Error ':try';
+
+use constant CHUNKSIZE    => 255;
+
+$SIG{PIPE} = 'IGNORE'; # prevent perl from quitting if trying to write to a closed socket ???
 
 my $d = HTTP::Daemon->new(
 	LocalPort => 9999,
@@ -10,7 +15,7 @@ my $d = HTTP::Daemon->new(
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
-my $clipboard_data;
+my $clipboard_data = "";
 my $clipboard_type;
 
 while(1) {
@@ -23,19 +28,29 @@ while(1) {
     }
 
     my $res = process_req($req);
+    $c->force_last_request;
     if ($res) {
-	   $c->send_response($res);
+		#$c->send_status_line($res->code);
+		#$c->send_header("Transfer-Encoding", "Chunked");
+		#print $c "\n";
+		#open my $fh, '<:raw', 'test.mp4';
+		#while(my $bytes_read = read $fh, my $bytes, 255){
+		#	print $c "kek", "\n";
+		#	print $c "kekekeke", "\n";
+		#}
+		$c->send_response($res);
     }
     else {
         $c->send_response(status_message_res(500));
     }
+    print "B closing ...!\n";
     $c->close;
     undef($c);
 }
 
 sub process_req{
 	my ($req) = @_;
-	print $req->uri->path, "\n";
+	print$req->method, " - ", $req->uri->path, "\n";
 
 	if($req->uri->path eq '/ping'){
 		return HTTP::Response->new(200, undef, undef, "pong");
