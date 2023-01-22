@@ -4,7 +4,8 @@ use HTTP::Status;
 
 my $d = HTTP::Daemon->new(
 	LocalPort => 9999,
-	ReuseAddr => 1
+	ReuseAddr => 1,
+	Timeout => 3
 ) || die;
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
@@ -12,10 +13,16 @@ print "<URL:", $d->url, ">\n";
 my $clipboard_data;
 my $clipboard_type;
 
-my $end;
-while (not $end) {
-    my $c = $d->accept;
-    my $res = process_req($c->get_request);
+while(1) {
+    my $c = $d->accept || next;
+    my $req = $c->get_request;
+    unless(defined $req){
+		$c->close;
+    		undef($c);
+		next;
+    }
+
+    my $res = process_req($req);
     if ($res) {
 	   $c->send_response($res);
     }
@@ -28,10 +35,15 @@ while (not $end) {
 
 sub process_req{
 	my ($req) = @_;
+	print $req->uri->path, "\n";
+
+	if($req->uri->path eq '/ping'){
+		return HTTP::Response->new(200, undef, undef, "pong");
+	}
 
 	if($req->uri->path eq '/clip'){
 		if($req->method eq 'GET'){
-			return HTTP::Response->new( 200, undef, ["Content-Type" => $clipboard_type], $clipboard_data);
+			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type], $clipboard_data);
 		}
 		if($req->method eq 'POST'){
 			my $body = $req->content;
@@ -41,11 +53,9 @@ sub process_req{
 				$clipboard_type = $type;
 				print "clipped [$type]:\n";
    			}
-
-			return HTTP::Response->new( 200, undef, undef, "done!");
+			return status_message_res(200);
 		}
 	}
-
 	return status_message_res(404);
 }
 
