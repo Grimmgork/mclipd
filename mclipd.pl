@@ -67,11 +67,14 @@ sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
 
+	# * /ping
 	if($req->uri->path eq '/ping'){
 		return HTTP::Response->new(200, undef, undef, "pong");
 	}
 
+	# * /clip
 	if($req->uri->path eq '/clip'){
+		# GET /clip
 		if($req->method eq 'GET'){
 			unless($clipboard_data){
 				return HTTP::Response->new(204, undef, undef, undef); # 204 empty response!
@@ -79,6 +82,7 @@ sub get_response{
 			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type, "Transfer-Encoding" => "Chunked"], $clipboard_data);
 		}
 
+		# POST /clip
 		if($req->method eq 'POST'){
 			my $body = $req->content;
 			my $type = $req->header("Content-Type");
@@ -95,6 +99,7 @@ sub get_response{
 			return status_message_res(200);
 		}
 
+		# DELETE /clip
 		if($req->method eq 'DELETE'){
 			$clipboard_data = undef;
 			$clipboard_type = undef;
