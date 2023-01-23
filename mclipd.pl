@@ -81,25 +81,15 @@ sub get_response{
 			}
 			my @header;
 			push @header, "transfer-encoding" => "chunked";
-			push @header, "content-type" => $clipboard_type if defined $clipboard_type;
+			push @header, "content-type" => $clipboard_type if $clipboard_type;
 			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
 		}
 
 		# POST /clip
 		if($req->method eq 'POST'){
-			my $body = $req->content;
-			my $type = $req->header("Content-Type");
-			$body = undef if $body eq "";
-			$type = undef if $type eq "";
-			if(defined $body){
-				$clipboard_data = $body;
-				$clipboard_type = $type;
-				print "clipped [$type]:\n";
-   			}else{
-				$clipboard_data = undef;
-				$clipboard_type = undef;
-				print "clear!\n";
-			}
+			$clipboard_data = $req->content || undef;
+			$clipboard_type = $req->header("Content-Type") || undef;
+			$clipboard_type = undef unless $clipboard_data;
 			return status_message_res(200);
 		}
 
