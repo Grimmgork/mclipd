@@ -1,7 +1,6 @@
 use strict;
 use HTTP::Daemon;
 use HTTP::Status;
-use Error ':try';
 
 use constant CHUNKSIZE    => 255;
 
@@ -30,34 +29,41 @@ while(1) {
     my $res = get_response($req);
     $c->force_last_request;
     if ($res) {
-		$c->send_status_line($res->code);
-		foreach my $key (keys %{$res->headers}){
-			$c->send_header(%{$res->headers}{$key});
-			# print $key, " - ", , "\n";
+		if(%{$res->headers}{"transfer-encoding"} eq "Chunked"){
+			send_response_chunked($c, $res);
 		}
-		$c->send_header("Transfer-Encoding", "Chunked");
-		print $c "\n";
-		my $i = 0;
-		while(my $chunk = substr $res->content, $i, CHUNKSIZE){
-			my $hex = sprintf("%X", length $chunk);
-			print $c $hex, "\n";
-			print $c $chunk, "\n";
-			$i += length $chunk;
-			print "send chunk! ", length $chunk, "\n";
+		else{
+			$c->send_response($res);
 		}
-		print $c "0\n\n";
     }
-    else {
-        $c->send_response(status_message_res(500));
+    else{
+		$c->send_response(status_message_res(500));
     }
-    print "closing ...!\n";
     $c->close;
     undef($c);
 }
 
+sub send_response_chunked{
+	my ($c, $res) = @_;
+
+	$c->send_status_line($res->code);
+	foreach my $key (keys %{$res->headers}){
+		$c->send_header(%{$res->headers}{$key});
+	}
+	print $c "\n";
+	my $i = 0;
+	while(my $chunk = substr $res->content, $i, CHUNKSIZE){
+		my $hex = sprintf("%X", length $chunk);
+		print $c $hex, "\n";
+		print $c $chunk, "\n";
+		$i += length $chunk;
+	}
+	print $c "0\n\n";
+}
+
 sub get_response{
 	my ($req) = @_;
-	print$req->method, " - ", $req->uri->path, "\n";
+	print $req->method, " - ", $req->uri->path, "\n";
 
 	if($req->uri->path eq '/ping'){
 		return HTTP::Response->new(200, undef, undef, "pong");
@@ -65,7 +71,7 @@ sub get_response{
 
 	if($req->uri->path eq '/clip'){
 		if($req->method eq 'GET'){
-			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type], $clipboard_data);
+			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type, "Transfer-Encoding" => "Chunked"], $clipboard_data);
 		}
 		if($req->method eq 'POST'){
 			my $body = $req->content;
