@@ -15,7 +15,7 @@ my $d = HTTP::Daemon->new(
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
-my $clipboard_data = "";
+my $clipboard_data;
 my $clipboard_type;
 
 while(1) {
@@ -27,28 +27,35 @@ while(1) {
 		next;
     }
 
-    my $res = process_req($req);
+    my $res = get_response($req);
     $c->force_last_request;
     if ($res) {
-		#$c->send_status_line($res->code);
-		#$c->send_header("Transfer-Encoding", "Chunked");
-		#print $c "\n";
-		#open my $fh, '<:raw', 'test.mp4';
-		#while(my $bytes_read = read $fh, my $bytes, 255){
-		#	print $c "kek", "\n";
-		#	print $c "kekekeke", "\n";
-		#}
-		$c->send_response($res);
+		$c->send_status_line($res->code);
+		foreach my $key (keys %{$res->headers}){
+			$c->send_header(%{$res->headers}{$key});
+			# print $key, " - ", , "\n";
+		}
+		$c->send_header("Transfer-Encoding", "Chunked");
+		print $c "\n";
+		my $i = 0;
+		while(my $chunk = substr $res->content, $i, CHUNKSIZE){
+			my $hex = sprintf("%X", length $chunk);
+			print $c $hex, "\n";
+			print $c $chunk, "\n";
+			$i += length $chunk;
+			print "send chunk! ", length $chunk, "\n";
+		}
+		print $c "0\n\n";
     }
     else {
         $c->send_response(status_message_res(500));
     }
-    print "B closing ...!\n";
+    print "closing ...!\n";
     $c->close;
     undef($c);
 }
 
-sub process_req{
+sub get_response{
 	my ($req) = @_;
 	print$req->method, " - ", $req->uri->path, "\n";
 
