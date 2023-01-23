@@ -67,6 +67,11 @@ sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
 
+	if($req->uri->path eq '/'){
+		print "root \n";
+		return HTTP::Response->new(200, undef, undef, "metaclip ~ \n\nusage:\nGET POST PUT DELETE /clip\n");
+	}
+
 	# * /ping
 	if($req->uri->path eq '/ping'){
 		return HTTP::Response->new(200, undef, undef, "pong");
@@ -77,7 +82,7 @@ sub get_response{
 		# GET /clip
 		if($req->method eq 'GET'){
 			unless($clipboard_data){
-				return HTTP::Response->new(204, undef, undef, undef); # 204 empty response!
+				return status_message_res(204); # 204 empty response!
 			}
 			my @header;
 			push @header, "transfer-encoding" => "chunked";
@@ -86,7 +91,7 @@ sub get_response{
 		}
 
 		# POST /clip
-		if($req->method eq 'POST'){
+		if($req->method eq 'POST' or $req->method eq 'PUT'){
 			$clipboard_data = $req->content || undef;
 			$clipboard_type = $req->header("Content-Type") || undef;
 			$clipboard_type = undef unless $clipboard_data;
