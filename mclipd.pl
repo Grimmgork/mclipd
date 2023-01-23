@@ -11,6 +11,7 @@ my $d = HTTP::Daemon->new(
 	ReuseAddr => 1,
 	Timeout => 3
 ) || die;
+
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
@@ -33,6 +34,7 @@ while(1) {
 			send_response_chunked($c, $res);
 		}
 		else{
+			delete ${$res->headers}{"transfer-encoding"};
 			$c->send_response($res);
 		}
     }
@@ -71,6 +73,9 @@ sub get_response{
 
 	if($req->uri->path eq '/clip'){
 		if($req->method eq 'GET'){
+			unless($clipboard_data){
+				return HTTP::Response->new(204, undef, undef, undef); # 204 empty response!
+			}
 			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type, "Transfer-Encoding" => "Chunked"], $clipboard_data);
 		}
 		if($req->method eq 'POST'){
