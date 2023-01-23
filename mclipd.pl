@@ -30,7 +30,7 @@ while(1) {
     my $res = get_response($req);
     $c->force_last_request;
     if ($res) {
-		if(%{$res->headers}{"transfer-encoding"} eq "Chunked"){
+		if(%{$res->headers}{"transfer-encoding"} eq "chunked"){
 			send_response_chunked($c, $res);
 		}
 		else{
@@ -79,7 +79,10 @@ sub get_response{
 			unless($clipboard_data){
 				return HTTP::Response->new(204, undef, undef, undef); # 204 empty response!
 			}
-			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type, "Transfer-Encoding" => "Chunked"], $clipboard_data);
+			my @header;
+			push @header, "transfer-encoding" => "chunked";
+			push @header, "content-type" => $clipboard_type if defined $clipboard_type;
+			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
 		}
 
 		# POST /clip
@@ -87,6 +90,7 @@ sub get_response{
 			my $body = $req->content;
 			my $type = $req->header("Content-Type");
 			$body = undef if $body eq "";
+			$type = undef if $type eq "";
 			if(defined $body){
 				$clipboard_data = $body;
 				$clipboard_type = $type;
@@ -94,7 +98,7 @@ sub get_response{
    			}else{
 				$clipboard_data = undef;
 				$clipboard_type = undef;
-				print "cleared clipboard!:\n";
+				print "clear!\n";
 			}
 			return status_message_res(200);
 		}
@@ -103,7 +107,7 @@ sub get_response{
 		if($req->method eq 'DELETE'){
 			$clipboard_data = undef;
 			$clipboard_type = undef;
-			print "cleared clipboard!:\n";
+			print "clear!\n";
 			return status_message_res(200);
 		}
 	}
