@@ -78,14 +78,27 @@ sub get_response{
 			}
 			return HTTP::Response->new(200, undef, ["Content-Type" => $clipboard_type, "Transfer-Encoding" => "Chunked"], $clipboard_data);
 		}
+
 		if($req->method eq 'POST'){
 			my $body = $req->content;
 			my $type = $req->header("Content-Type");
+			$body = undef if $body eq "";
 			if(defined $body){
 				$clipboard_data = $body;
 				$clipboard_type = $type;
 				print "clipped [$type]:\n";
-   			}
+   			}else{
+				$clipboard_data = undef;
+				$clipboard_type = undef;
+				print "cleared clipboard!:\n";
+			}
+			return status_message_res(200);
+		}
+
+		if($req->method eq 'DELETE'){
+			$clipboard_data = undef;
+			$clipboard_type = undef;
+			print "cleared clipboard!:\n";
 			return status_message_res(200);
 		}
 	}
