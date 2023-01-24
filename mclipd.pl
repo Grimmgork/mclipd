@@ -1,6 +1,7 @@
 use strict;
 use HTTP::Daemon;
 use HTTP::Status;
+use feature 'state';
 
 use constant CHUNKSIZE    => 255;
 
@@ -12,6 +13,8 @@ my $d = HTTP::Daemon->new(
 	Timeout => 3
 ) || die;
 
+
+print get_mime_type("asdf.kek/kek.txt"), "\n";
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
@@ -26,7 +29,7 @@ while(1) {
     		undef($c);
 		next;
     }
-
+    
     my $res = get_response($req);
     $c->force_last_request;
     if ($res) {
@@ -68,8 +71,18 @@ sub get_response{
 	print $req->method, " - ", $req->uri->path, "\n";
 
 	if($req->uri->path eq '/'){
-		print "root \n";
-		return HTTP::Response->new(200, undef, undef, "metaclip ~ \n\nusage:\nGET POST PUT DELETE /clip\n");
+		return HTTP::Response->new(200, undef, ["transfer-encoding" => "chunked", "Content-Type" => "text/html"], read_static_file("/static/index.html"));
+	}
+
+	# GET /static/*
+	if($req->uri->path =~ /^\/static\// and $req->method eq 'GET'){
+		my $data = read_static_file($req->uri->path);
+		return status_message_res(404) unless $data;
+		my $mimetype = get_mime_type($req->uri->path);
+		my @header;
+		push @header, "transfer-encoding" => "chunked";
+		push @header, "Content-Type" => $mimetype if $mimetype;
+		return HTTP::Response->new(200, undef, \@header, $data);
 	}
 
 	# * /ping
@@ -113,4 +126,38 @@ sub status_message_res{
 	my $code = shift;
 	my $message = status_message($code);
 	return HTTP::Response->new($code, undef, undef, "$code - $message");
+}
+
+sub get_mime_type{
+	my $filename = shift;
+	state %hash = (
+        "html"	=> "text/html",
+        "ico"	=> "image/vnd.microsoft.icon",
+        "jpeg"	=> "image/jpeg",
+        "png"	=> "image/png",
+	   "txt"	=> "text/plain"
+    );
+    my ($ext) = $filename =~ /\.([^.]+)$/;
+    return undef unless defined $ext;
+    return $hash{$ext};
+}
+
+sub read_static_file{
+	my ($filename) = @_;
+	return undef unless $filename =~ /^\/static\//; # path must start with /static/*
+	return undef if $filename =~ /\/\.+\//; # reject .. or . notation in path
+	my @segments = split "/", $filename;
+	@segments = grep { $_ ne '' } @segments; # remove empty segments
+	$filename = join "/", ".", @segments; # construct real filename in file system
+	return undef unless -f $filename;
+
+	print "file access: $filename ...\n";
+	open(my $fh, '<:raw', $filename) or die "Could not open file '$filename' $!";
+	binmode $fh;
+	my $data;
+	while(<$fh>){
+		$data = $data . $_;
+	}
+	close $fh;
+	return $data;
 }
