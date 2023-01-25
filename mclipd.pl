@@ -1,6 +1,7 @@
 use strict;
 use HTTP::Daemon;
 use HTTP::Status;
+# use Data::UUID;
 use feature 'state';
 
 use constant CHUNKSIZE    => 255;
@@ -13,13 +14,12 @@ my $d = HTTP::Daemon->new(
 	Timeout => 3
 ) || die;
 
-
-print get_mime_type("asdf.kek/kek.txt"), "\n";
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
 my $clipboard_data;
 my $clipboard_type;
+my $clipboard_name = "test.txt";
 
 while(1) {
     my $c = $d->accept || next;
@@ -76,12 +76,12 @@ sub get_response{
 
 	# GET /static/*
 	if($req->uri->path =~ /^\/static\// and $req->method eq 'GET'){
-		my $data = read_static_file($req->uri->path);
-		return status_message_res(404) unless $data;
+		return status_message_res(404) unless my $data = read_static_file($req->uri->path);
 		my $mimetype = get_mime_type($req->uri->path);
 		my @header;
 		push @header, "transfer-encoding" => "chunked";
-		push @header, "Content-Type" => $mimetype if $mimetype;
+		push @header, "x-content-type-options" => "nosniff";
+		push @header, "content-type" => $mimetype if $mimetype;
 		return HTTP::Response->new(200, undef, \@header, $data);
 	}
 
@@ -100,6 +100,7 @@ sub get_response{
 			my @header;
 			push @header, "transfer-encoding" => "chunked";
 			push @header, "content-type" => $clipboard_type if $clipboard_type;
+			# push @header, "content-disposition" => "attachment; filename=$clipboard_name" if $clipboard_name;
 			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
 		}
 
