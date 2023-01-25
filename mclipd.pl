@@ -1,6 +1,7 @@
 use strict;
 use HTTP::Daemon;
 use HTTP::Status;
+use HTTP::Status qw(:constants);
 # use Data::UUID;
 use feature 'state';
 
@@ -37,7 +38,6 @@ while(1) {
 		$res = status_message_res(500);
     }
     $c->force_last_request;
-    $res->header("transfer-encoding" => "chunked");
     send_response_chunked($c, $res);
     $c->close;
     undef($c);
@@ -45,11 +45,13 @@ while(1) {
 
 sub send_response_chunked{
 	my ($c, $res) = @_;
-
+	my $cd = $res->code;
+	$res->header("transfer-encoding" => "chunked") unless $res->code == HTTP_NO_CONTENT;
 	$c->send_status_line($res->code);
 	foreach my $key (keys %{$res->headers}){
 		$c->send_header(%{$res->headers}{$key});
 	}
+	return if $res->code == HTTP_NO_CONTENT;
 	print $c "\n";
 	my $i = 0;
 	while(my $chunk = substr $res->content, $i, CHUNKSIZE){
@@ -64,8 +66,6 @@ sub send_response_chunked{
 sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
-
-	die "kekekekekekek!";
 
 	if($req->uri->path eq '/'){
 		return HTTP::Response->new(200, undef, ["Content-Type" => "text/html"], read_static_file("/static/index.html"));
