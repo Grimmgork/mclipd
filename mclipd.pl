@@ -19,7 +19,7 @@ print "<URL:", $d->url, ">\n";
 
 my $clipboard_data;
 my $clipboard_type;
-my $clipboard_name = "test.txt";
+my $clipboard_name = "file.txt";
 
 while(1) {
     my $c = $d->accept || next;
@@ -30,20 +30,15 @@ while(1) {
 		next;
     }
     
-    my $res = get_response($req);
+    my $res;
+    eval{ $res = get_response($req) };
+    if($@){
+		print "$@\n";
+		$res = status_message_res(500);
+    }
     $c->force_last_request;
-    if ($res) {
-		if(%{$res->headers}{"transfer-encoding"} eq "chunked"){
-			send_response_chunked($c, $res);
-		}
-		else{
-			delete ${$res->headers}{"transfer-encoding"};
-			$c->send_response($res);
-		}
-    }
-    else{
-		$c->send_response(status_message_res(500));
-    }
+    $res->header("transfer-encoding" => "chunked");
+    send_response_chunked($c, $res);
     $c->close;
     undef($c);
 }
@@ -70,8 +65,10 @@ sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
 
+	die "kekekekekekek!";
+
 	if($req->uri->path eq '/'){
-		return HTTP::Response->new(200, undef, ["transfer-encoding" => "chunked", "Content-Type" => "text/html"], read_static_file("/static/index.html"));
+		return HTTP::Response->new(200, undef, ["Content-Type" => "text/html"], read_static_file("/static/index.html"));
 	}
 
 	# GET /static/*
@@ -79,9 +76,10 @@ sub get_response{
 		return status_message_res(404) unless my $data = read_static_file($req->uri->path);
 		my $mimetype = get_mime_type($req->uri->path);
 		my @header;
-		push @header, "transfer-encoding" => "chunked";
-		push @header, "x-content-type-options" => "nosniff";
-		push @header, "content-type" => $mimetype if $mimetype;
+		if($mimetype){
+			push @header, "x-content-type-options" => "nosniff";
+			push @header, "content-type" => $mimetype if $mimetype;
+		}
 		return HTTP::Response->new(200, undef, \@header, $data);
 	}
 
@@ -98,7 +96,6 @@ sub get_response{
 				return status_message_res(204); # 204 empty response!
 			}
 			my @header;
-			push @header, "transfer-encoding" => "chunked";
 			push @header, "content-type" => $clipboard_type if $clipboard_type;
 			# push @header, "content-disposition" => "attachment; filename=$clipboard_name" if $clipboard_name;
 			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
