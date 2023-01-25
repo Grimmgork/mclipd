@@ -46,7 +46,11 @@ while(1) {
 sub send_response_chunked{
 	my ($c, $res) = @_;
 	my $cd = $res->code;
-	$res->header("transfer-encoding" => "chunked") unless $res->code == HTTP_NO_CONTENT;
+	$res->header("transfer-encoding" => "chunked");
+	if($res->code == HTTP_NO_CONTENT){
+		$res->remove_header("content-type");
+		$res->remove_header("transfer-encoding");
+	}
 	$c->send_status_line($res->code);
 	foreach my $key (keys %{$res->headers}){
 		$c->send_header(%{$res->headers}{$key});
@@ -67,8 +71,9 @@ sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
 
+	# * /
 	if($req->uri->path eq '/'){
-		return HTTP::Response->new(200, undef, ["Content-Type" => "text/html"], read_static_file("/static/index.html"));
+		return HTTP::Response->new(200, undef, ["content-type" => "text/html"], read_static_file("/static/index.html"));
 	}
 
 	# GET /static/*
@@ -96,15 +101,18 @@ sub get_response{
 				return status_message_res(204); # 204 empty response!
 			}
 			my @header;
-			push @header, "content-type" => $clipboard_type if $clipboard_type;
-			# push @header, "content-disposition" => "attachment; filename=$clipboard_name" if $clipboard_name;
+			if($clipboard_type){
+				push @header, "content-type" => $clipboard_type;
+				push @header, "x-content-type-options" => "nosniff";
+			}
+			push @header, "content-disposition" => "inline; filename=$clipboard_name" if $clipboard_name;
 			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
 		}
 
 		# POST /clip
 		if($req->method eq 'POST' or $req->method eq 'PUT'){
 			$clipboard_data = $req->content || undef;
-			$clipboard_type = $req->header("Content-Type") || undef;
+			$clipboard_type = $req->header("content-type") || undef;
 			$clipboard_type = undef unless $clipboard_data;
 			return status_message_res(200);
 		}
@@ -123,7 +131,7 @@ sub get_response{
 sub status_message_res{
 	my $code = shift;
 	my $message = status_message($code);
-	return HTTP::Response->new($code, undef, undef, "$code - $message");
+	return HTTP::Response->new($code, undef, ["content-type" => "text/plain"], "$code - $message");
 }
 
 sub get_mime_type{
