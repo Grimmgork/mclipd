@@ -72,6 +72,7 @@ sub send_response_chunked{
 sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
+	my $authenticated = 1 if $req->header("apikey") eq APIKEY;
 
 	# GET /static/*
 	if($req->uri->path =~ /^\/static\// and $req->method eq 'GET'){
@@ -85,26 +86,31 @@ sub get_response{
 		return HTTP::Response->new(200, undef, \@header, $data);
 	}
 
-	# * /ping
-	if($req->uri->path eq '/ping'){
-		return HTTP::Response->new(200, undef, undef, "pong");
+	# GET /[secret]/[file.txt]
+	if($req->method eq 'GET' and my ($share, $filename) = $req->uri->path =~ m/^\/([^\/ ]+)\/([^\/ ]+)/){
+		print "$share + $filename\n";
+		return status_message_res(403) unless ($share eq $clipboard_share and $filename eq $clipboard_name);
+		print "match!\n";
+		$clipboard_share = chomp($clipboard_share = `cat /proc/sys/kernel/random/uuid`);
+		unless($clipboard_data){
+			return status_message_res(204); # 204 empty response!
+		}
+		my @header;
+		if($clipboard_type){
+			push @header, "content-type" => $clipboard_type;
+			push @header, "x-content-type-options" => "nosniff";
+		}
+		return HTTP::Response->new(200, undef, \@header, $clipboard_data);
 	}
+
+	return status_message_res(403) unless $authenticated;
 
 	# * /
 	if($req->uri->path eq '/'){
+		print "redirect\n";
 		# GET /
 		if($req->method eq 'GET'){
-			#unless($clipboard_data){
-			#	return status_message_res(204); # 204 empty response!
-			#}
-			#my @header;
-			#if($clipboard_type){
-			#	push @header, "content-type" => $clipboard_type;
-			#	push @header, "x-content-type-options" => "nosniff";
-			#}
-			#push @header, "content-disposition" => "inline; filename=$clipboard_name;" if $clipboard_name;
-			#return HTTP::Response->new(200, undef, \@header, $clipboard_data);
-			return HTTP::Response->new(307, undef, ["location" => "/$clipboard_share/$clipboard_name"], $clipboard_data);
+			return HTTP::Response->new(307, undef, ["location" => "/$clipboard_share/$clipboard_name"], undef);
 		}
 		# DELETE /
 		if($req->method eq 'DELETE'){
@@ -118,21 +124,10 @@ sub get_response{
 	# POST /[file.txt]
 	if($req->method eq 'POST' and my($filename) = $req->uri =~ /^\/([^\/ ]+)$/){
 		print "$filename\n";
-		#$clipboard_data = $req->content || undef;
-		#$clipboard_type = $req->header("content-type") || undef;
-		#$clipboard_type = undef unless $clipboard_data;
-		#chomp($clipboard_name = `cat /proc/sys/kernel/random/uuid`);
-		return status_message_res(200);
-	}
-
-
-	# GET /[secret]/[file.txt]
-	if($req->method eq 'GET' and my ($share, $filename) = $req->uri->path =~ m/^\/([^\/ ]+)\/([^\/ ]+)/){
-		print "$share + $filename\n";
-		unless ($share eq $clipboard_share and $filename eq $clipboard_name){
-			return status_message_res(403);
-		}
-		print "authorized!\n";
+		$clipboard_data = $req->content || undef;
+		$clipboard_type = $req->header("content-type") || undef;
+		$clipboard_type = undef unless $clipboard_data;
+		$clipboard_share = chomp($clipboard_share = `cat /proc/sys/kernel/random/uuid`);
 		return status_message_res(200);
 	}
 
