@@ -2,17 +2,17 @@ use strict;
 use HTTP::Daemon;
 use HTTP::Status;
 use HTTP::Status qw(:constants);
-# use Data::UUID;
 use feature 'state';
 
-use constant CHUNKSIZE    => 255;
+use constant CHUNKSIZE	=> 255;
+use constant APIKEY		=> "secretkey";
 
 $SIG{PIPE} = 'IGNORE'; # prevent perl from quitting if trying to write to a closed socket ???
 
 my $d = HTTP::Daemon->new(
 	LocalPort => 9999,
 	ReuseAddr => 1,
-	Timeout => 3
+	Timeout => 1
 ) || die;
 
 print "starting metaclip server ...\n";
@@ -20,7 +20,8 @@ print "<URL:", $d->url, ">\n";
 
 my $clipboard_data;
 my $clipboard_type;
-my $clipboard_name = "file.txt";
+my $clipboard_name = "test.txt";
+my $clipboard_share = "secretlocation";
 
 while(1) {
     my $c = $d->accept || next;
@@ -56,6 +57,7 @@ sub send_response_chunked{
 		$c->send_header(%{$res->headers}{$key});
 	}
 	return if $res->code == HTTP_NO_CONTENT;
+
 	print $c "\n";
 	my $i = 0;
 	while(my $chunk = substr $res->content, $i, CHUNKSIZE){
@@ -70,11 +72,6 @@ sub send_response_chunked{
 sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
-
-	# * /
-	if($req->uri->path eq '/'){
-		return HTTP::Response->new(200, undef, ["content-type" => "text/html"], read_static_file("/static/index.html"));
-	}
 
 	# GET /static/*
 	if($req->uri->path =~ /^\/static\// and $req->method eq 'GET'){
@@ -93,31 +90,23 @@ sub get_response{
 		return HTTP::Response->new(200, undef, undef, "pong");
 	}
 
-	# * /clip
-	if($req->uri->path eq '/clip'){
-		# GET /clip
+	# * /
+	if($req->uri->path eq '/'){
+		# GET /
 		if($req->method eq 'GET'){
-			unless($clipboard_data){
-				return status_message_res(204); # 204 empty response!
-			}
-			my @header;
-			if($clipboard_type){
-				push @header, "content-type" => $clipboard_type;
-				push @header, "x-content-type-options" => "nosniff";
-			}
-			push @header, "content-disposition" => "inline; filename=$clipboard_name" if $clipboard_name;
-			return HTTP::Response->new(200, undef, \@header, $clipboard_data);
+			#unless($clipboard_data){
+			#	return status_message_res(204); # 204 empty response!
+			#}
+			#my @header;
+			#if($clipboard_type){
+			#	push @header, "content-type" => $clipboard_type;
+			#	push @header, "x-content-type-options" => "nosniff";
+			#}
+			#push @header, "content-disposition" => "inline; filename=$clipboard_name;" if $clipboard_name;
+			#return HTTP::Response->new(200, undef, \@header, $clipboard_data);
+			return HTTP::Response->new(307, undef, ["location" => "/$clipboard_share/$clipboard_name"], $clipboard_data);
 		}
-
-		# POST /clip
-		if($req->method eq 'POST' or $req->method eq 'PUT'){
-			$clipboard_data = $req->content || undef;
-			$clipboard_type = $req->header("content-type") || undef;
-			$clipboard_type = undef unless $clipboard_data;
-			return status_message_res(200);
-		}
-
-		# DELETE /clip
+		# DELETE /
 		if($req->method eq 'DELETE'){
 			$clipboard_data = undef;
 			$clipboard_type = undef;
@@ -125,6 +114,28 @@ sub get_response{
 			return status_message_res(200);
 		}
 	}
+
+	# POST /[file.txt]
+	if($req->method eq 'POST' and my($filename) = $req->uri =~ /^\/([^\/ ]+)$/){
+		print "$filename\n";
+		#$clipboard_data = $req->content || undef;
+		#$clipboard_type = $req->header("content-type") || undef;
+		#$clipboard_type = undef unless $clipboard_data;
+		#chomp($clipboard_name = `cat /proc/sys/kernel/random/uuid`);
+		return status_message_res(200);
+	}
+
+
+	# GET /[secret]/[file.txt]
+	if($req->method eq 'GET' and my ($share, $filename) = $req->uri->path =~ m/^\/([^\/ ]+)\/([^\/ ]+)/){
+		print "$share + $filename\n";
+		unless ($share eq $clipboard_share and $filename eq $clipboard_name){
+			return status_message_res(403);
+		}
+		print "authorized!\n";
+		return status_message_res(200);
+	}
+
 	return status_message_res(404);
 }
 
