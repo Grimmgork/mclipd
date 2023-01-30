@@ -1,9 +1,9 @@
 
-~ -> only accessible via apikey authentication
+[~]      access should be authenticated with apikey (via reverse proxy?)
+[mclip]  host:port
 
-~ get    mclip	-> redirect mclip/[guid]/file.txt -> reveals the url to the ressource
-~ post   mclip/image.jpg
-~ delete mclip
+~ get    mclip	           -> redirect mclip/[secret location]/file.txt (reveals the secret url to the ressource)
+~ post   mclip/file.txt   -> upload resource to clipboard with name
+~ delete mclip            -> clears the clipboard
 
-   get    mclip/[guid]/file.txt
-   
+  get    mclip/[secret location]/file.txt
