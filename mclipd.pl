@@ -83,18 +83,6 @@ sub get_response{
 	print $req->method, " - ", $req->uri->path, "\n";
 	my $authenticated = 1 if $req->header("apikey") eq APIKEY;
 
-	# GET /static/*
-	if($req->method eq 'GET' and $req->uri->path =~ /^\/static\//){
-		return status_message_res(404) unless my $data = read_static_file($req->uri->path);
-		my $mimetype = MIMETYPES->mimeTypeOf($req->uri->path);
-		my @header;
-		if($mimetype){
-			push @header, "x-content-type-options" => "nosniff";
-			push @header, "content-type" => $mimetype if $mimetype;
-		}
-		return HTTP::Response->new(200, undef, \@header, $data);
-	}
-
 	# GET /[secretlocation]/[file.txt]
 	if($req->method eq 'GET' and my ($share, $filename) = $req->uri->path =~ m/^\/([^\/ ]+)\/([^\/ ]+)/){
 		print "$share + $filename\n";
@@ -156,24 +144,4 @@ sub status_message_res{
 	my $code = shift;
 	my $message = status_message($code);
 	return HTTP::Response->new($code, undef, ["content-type" => "text/plain"], "$code - $message");
-}
-
-sub read_static_file{
-	my ($filename) = @_;
-	return undef unless $filename =~ /^\/static\//; # path must start with /static/*
-	return undef if $filename =~ /\/\.+\//; # reject .. or . notation in path
-	my @segments = split "/", $filename;
-	@segments = grep { $_ ne '' } @segments; # remove empty segments
-	$filename = join "/", ".", @segments; # construct real filename in file system
-	return undef unless -f $filename;
-
-	print "file access: $filename ...\n";
-	open(my $fh, '<:raw', $filename) or die "Could not open file '$filename' $!";
-	binmode $fh;
-	my $data;
-	while(<$fh>){
-		$data = $data . $_;
-	}
-	close $fh;
-	return $data;
 }
