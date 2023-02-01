@@ -28,7 +28,7 @@ print "<URL:", $d->url, ">\n";
 my $clipboard_data;
 my $clipboard_type;
 my $clipboard_name;
-my $clipboard_share = get_new_access_token();
+my $clipboard_share;
 
 while(1) {
     my $c = $d->accept || next;
@@ -81,9 +81,8 @@ sub send_response_chunked{
 sub get_response{
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
-	my $authenticated = 1 if $req->header("apikey") eq APIKEY;
 
-	# GET /[secretlocation]/[file.txt]
+	# GET /[file.txt]
 	if($req->method eq 'GET' and my ($share, $filename) = $req->uri->path =~ m/^\/([^\/ ]+)\/([^\/ ]+)/){
 		print "$share + $filename\n";
 		return status_message_res(403) unless ($share eq $clipboard_share and $filename eq $clipboard_name);
@@ -96,8 +95,6 @@ sub get_response{
 		$res->header("content-type" => $clipboard_type, "x-content-type-options" => "nosniff") if $clipboard_type;
 		return $res;
 	}
-
-	return status_message_res(403) unless $authenticated;
 
 	# * /
 	if($req->uri->path eq '/'){
@@ -117,7 +114,7 @@ sub get_response{
 		}
 	}
 
-	# POST /[file.txt]
+	# POST /
 	if($req->method eq 'POST' and my($filename) = $req->uri =~ /^\/([^\/ ]+)$/){
 		$clipboard_data = $req->content || undef;
 		if($clipboard_data){
@@ -134,10 +131,6 @@ sub get_response{
 	}
 
 	return status_message_res(404);
-}
-
-sub get_new_access_token{
-	return random_string_from( 'abcdefghijklmnop123456789-', 10 );
 }
 
 sub status_message_res{
