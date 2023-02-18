@@ -14,12 +14,12 @@ use constant MIMETYPES	=> MIME::Types->new;
 $SIG{PIPE} = 'IGNORE'; # prevent perl from quitting if trying to write to a closed socket ???
 
 my $d = HTTP::Daemon->new(
-	LocalPort => 9999,
+	LocalPort => 5050,
 	ReuseAddr => 1,
 	Timeout => 1
 ) || die;
 
-print get_new_access_token(), "\n";
+# print get_new_access_token(), "\n";
 print localtime->strftime('%Y%m%d-%H%M%S'), "\n";
 
 print "starting metaclip server ...\n";
