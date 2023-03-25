@@ -14,7 +14,7 @@ use constant MIMETYPES	=> MIME::Types->new;
 $SIG{PIPE} = 'IGNORE'; # prevent perl from quitting if trying to write to a closed socket ???
 
 my $d = HTTP::Daemon->new(
-	LocalPort => 5050,
+	LocalPort => 5000,
 	ReuseAddr => 1,
 	Timeout => 1
 ) || die;
