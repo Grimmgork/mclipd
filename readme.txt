@@ -1,8 +1,17 @@
-[~]      access should be authenticated with apikey (via reverse proxy?)
-[mclip]  host:port
+# metaclip
+a personal http clipboard in the cloud
 
-~ get    mclip			-> redirect mclip/[secret location]/file.txt (reveals the secret url to the ressource, only works once)
-~ post   mclip/file.txt  -> upload resource to clipboard with name
-~ delete mclip           -> clears the clipboard
+mclipd.pl is a perl script representing said clipboard.
 
-  get    mclip/[secret location]/file.txt
+note:
+mclipd does not implement access control and thus should be ran behind
+a authentication/authorization reverse proxy when exposed on the internet.
+
+mclipd is asynchronous in nature and processes requests one after the other.
+
+## endpoints:
+
+GET    /[file.txt]       returns the stored file
+GET    /                 returns a redirect to the stored files name, returns the file if file is unnamed
+DELETE /                 clears the clipboard
+POST   /[file.txt]       upload a file, filename can be empty
