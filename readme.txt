@@ -4,10 +4,10 @@ a personal http clipboard in the cloud
 mclipd.pl is a perl script representing said clipboard.
 
 note:
-mclipd does not implement access control and thus should be ran behind
-a authentication/authorization reverse proxy when exposed on the internet.
+mclipd does not implement access control and thus should be run behind
+an authentication/authorization reverse proxy when exposed on the internet.
 
-mclipd is asynchronous in nature and processes requests one after the other.
+mclipd is synchronous in nature and processes requests one after the other.
 
 ## endpoints:
 
