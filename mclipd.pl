@@ -2,10 +2,9 @@ use strict;
 use HTTP::Daemon;
 use HTTP::Status;
 use HTTP::Status qw(:constants);
-use Bytes::Random::Secure qw( random_string_from );
-use feature 'state';
 use Time::Piece;
 use MIME::Types;
+use HTML::Template;
 
 use constant CHUNKSIZE	=> 255;
 use constant MIMETYPES	=> MIME::Types->new;
@@ -25,9 +24,7 @@ print localtime->strftime('%Y%m%d-%H%M%S');
 print "starting metaclip server ...\n";
 print "<URL:", $d->url, ">\n";
 
-my $clipboard_data;
-my $clipboard_name;
-my $clipboard_time;
+my $data; # hash reference; holds all fields to describe data: content, filename, time, mimetype
 
 while(1) {
     my $c = $d->accept || next;
@@ -81,48 +78,55 @@ sub get_response {
 	my ($req) = @_;
 	print $req->method, " - ", $req->uri->path, "\n";
 
+	if($req->uri->path eq '/ui'){
+		return HTTP::Response->new(200, undef, [], "kek!");
+	}
+
+	if($req->uri->path eq '/uptext'){
+		return HTTP::Response->new(200, undef, [], "kek!");
+	}
+
+	if($req->uri->path eq '/upfile'){
+		return HTTP::Response->new(200, undef, [], "kek!");
+	}
+
 	if($req->uri->path eq '/'){
 		# GET /
 		if($req->method eq 'GET'){
-			if($clipboard_name){
-				return status_message_res(204) unless $clipboard_data; # 204 empty response!
-				return HTTP::Response->new(307, undef, ["location" => "/$clipboard_name"], undef);
+			return status_message_res(204) unless $data->{content}; # 204 empty response!
+			if($req->uri->query eq "download"){
+				return HTTP::Response->new(200, undef, ["content-disposition" => "attachment; filename=" . $data->{filename}, "content-type" => $data->{mimetype}] || generate_filename($data->{time}), $data->{content});
 			}
+			return return HTTP::Response->new(200, undef, ["content-disposition" => "attachment; filename=" . $data->{filename}, "content-type" => $data->{mimetype}] || generate_filename($data->{time}), $data->{content});
+		}
+
+		# POST /
+		if($req->method eq "POST"){
+			my $filename;
+			if(my $header = $req->headers->header("content-disposition")){
+				($filename) = $header =~ /\bfilename="([^"]+)"/; # extract filename
+				$filename =~ s/[^a-zA-Z0-9_.-]/#/g; # remove funny characters and replace them with #
+			}
+			my $mime = undef;
+			unless($mime = $req->header("content-type")){
+				# check for plaintext
+				# default is octet stream, generate filename.bin
+			}
+			my $time = time();
+			$data = {
+				content  => $req->content,
+				filename => $filename || $time,
+				time     => $time,
+				mimetype => $mime
+			};
+			print $data->{filename}, "\n";
+			return status_message_res(200);
 		}
 
 		# DELETE /
 		if($req->method eq 'DELETE'){
-			$clipboard_data = undef;
-			$clipboard_name = undef;
-			$clipboard_time = undef;
+			$data = undef;
 			print "clipboard dumped!\n";
-			return status_message_res(200);
-		}
-
-		# HEAD /
-		if($req->method eq 'HEAD'){
-			return status_message_res(204) unless $clipboard_data; # 204 empty response!
-			return HTTP::Response->new(200, undef, ["location" => "/$clipboard_name", "last-modified" => "kek"], undef);
-		}
-	}
-
-	# * /[file.txt]
-	if(my ($filename) = $req->uri->path =~ m/^\/([a-z0-9_-~.]*)$/){
-		# GET
-		if($req->method eq 'GET'){
-			return status_message_res(204) unless $clipboard_data; # 204 empty response!
-			return status_message_res(404) unless ($filename eq $clipboard_name);
-			return HTTP::Response->new(200, undef, ["last-modified" => "kek", "last-modified" => "kek"], $clipboard_data);
-		}
-
-		# POST 
-		if($req->method eq "POST"){
-			if($filename eq "") {
-				# TODO: extract filename from content-disposition header
-			}
-			$clipboard_data = $req->content;
-			$clipboard_name = $filename;
-			$clipboard_time = time();
 			return status_message_res(200);
 		}
 	}
@@ -134,4 +138,9 @@ sub status_message_res {
 	my $code = shift;
 	my $message = status_message($code);
 	return HTTP::Response->new($code, undef, ["content-type" => "text/plain"], "$code - $message");
+}
+
+sub generate_filename {
+	my $time = shift;
+	return "file-$time";
 }
