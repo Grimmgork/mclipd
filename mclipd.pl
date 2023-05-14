@@ -1,4 +1,3 @@
-use Plack::Request;
 use HTTP::Server::PSGI;
 use HTTP::Status;
 use HTML::Template;
@@ -7,6 +6,7 @@ use JSON;
 
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
+use constant CHUNKSIZE => 2048;
 
 my $app = \&app;
 my $server = HTTP::Server::PSGI->new(
@@ -17,17 +17,12 @@ my $server = HTTP::Server::PSGI->new(
 
 $server->run($app);
 
-my $INFO;
-my $CONTENT;
+my $INFO;    # ref to hash containing info about the clipped file
+my $CONTENT; # array ref of chunked content of clipped file
 
 sub app {
 	my $env = shift;
-	
-	die "not suitable for multithread/-process!\n" if $env->{"psgi.multithread"} or $env->{"psgi.multiprocess"};
-
-	# while ( ($k,$v) = each %$env ) {
-    	# 	print "$k => $v\n";
-	# }
+	die "not suitable for multithreading/forking!\n" if $env->{"psgi.multithread"} or $env->{"psgi.multiprocess"};
 
 	print $env->{REQUEST_METHOD}, " - ", $env->{PATH_INFO}, "\n";
 
@@ -66,32 +61,29 @@ sub app {
 		if($env->{REQUEST_METHOD} eq "POST"){
 			my $filename;
 			if(my $header = $env->{HTTP_CONTENT_DISPOSITION}){
-				($filename) = $header =~ /\bfilename=(.+)\b/; # extract filename
-				$filename =~ s/[^a-zA-Z0-9_.-]/_/g; # remove funny characters and replace them with #
+				($filename) = $header =~ /\bfilename=\"(.+)\"/; # extract filename
+				$filename =~ s/[^a-zA-Z0-9_.-]/_/g; # replace funny characters with _
 			}
-			my $time = time();
-			my $length = 0;
-			($length, $CONTENT) = chop_stream($env->{"psgi.input"}, 1024);
+			
+			my $mime = $env->{CONTENT_TYPE} || "application/octet-stream";
 
-			my $mime = $env->{CONTENT_TYPE};
-			unless($mime){
-				$mime = "application/octet-stream";
-			}
+			my $length = 0;
+			($length, $CONTENT) = chop_stream($env->{"psgi.input"}, CHUNKSIZE);
 
 			$INFO = {
-				time     => $time,
+				time     => time(),
 				filename => $filename || $time,
 				mimetype => $mime,
 				length   => $length,
 				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1)
 			};
-			print $INFO->{filename}, "\n";
 			return res_status_message(200);
 		}
 
 		# DELETE /
 		if($env->{REQUEST_METHOD} eq 'DELETE'){
 			$INFO = undef;
+			$CONTENT = undef;
 			print "clipboard dumped!\n";
 			return res_status_message(200);
 		}
