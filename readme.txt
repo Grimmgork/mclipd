@@ -10,6 +10,8 @@ an authentication/authorization reverse proxy when exposed on the internet.
 mclipd is synchronous in nature and processes requests one after the other.
 The goal is to keep all the clipped data in RAM.
 
+The application is implementing the PSGI interface and is run by HTTP::Server::PSGI.
+
 ## endpoints:
 
 GET    /       downloads the stored file.
