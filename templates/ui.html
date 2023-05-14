@@ -1,70 +1,21 @@
 <html>
-<div id="div_main">
-	<p>15.5.2023-8:10 <a href="javascript:copy_to_clipboard();">copy</a> <a href="#upltxt">upl-text</a> <a href="">upl-file</a><a href="">15052023_0810.txt</a></p>
-	<p>
-<pre>
-Assum dolore amet option autem ipsum invidunt
-sanctus dolor takimata nam et vero duis autem et magna et diam.
-Facilisi sed eirmod dolore vero nonumy et amet erat
-nonumy elitr nostrud lorem nulla rebum dolor augue stet sanctus.
-Lobortis velit sanctus sit. Ea in invidunt consequat elitr stet consetetur
-</pre>
-</div>
-<div id="div_1" style="display: none;">
-	<p><textarea id="1" wrap="off"></textarea></p>
-	<a href="#main">abort</a>
-	<a href="javascript:upltxt_upload();">upload</a>
-</div>
+<p><TMPL_VAR NAME=TIME ESCAPE=HTML> - <TMPL_VAR NAME=FILENAME ESCAPE=HTML></p>
+<p>
+	<a href="/" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
+	<a href="/" >raw</a>
+	<TMPL_IF NAME="EMBED"><a href="javascript:copy_embed();" >copy</a></TMPL_IF>
+</p>
 
+<TMPL_IF NAME="EMBED">
+<pre id="embed_text"><TMPL_VAR NAME=EMBED ESCAPE=HTML></pre>
+<TMPL_ELSE>
+<a href="/" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>"><TMPL_VAR NAME=FILENAME ESCAPE=HTML></a>
+</TMPL_IF>
 <script>
-	const fragments = {
-		"#main": {
-			div: document.getElementById("div_main"),
-			init: function() { }
-		},
-		"#upltxt": {
-			div: document.getElementById("div_1"),
-			textarea: document.getElementById("1"),
-			init: function() {
-				this.textarea.value="";
-			}
-		}
-	};
-
-	function process_fragment(frag) {
-		Object.keys(fragments).forEach(function (key) { fragments[key].div.style.display = "none"; });
-		if(frag == "" || !(frag in fragments)){
-			fragments["#main"].div.style.display = "inline";
-			return;
-		}
-		fragments[frag].div.style.display = "inline";
-		fragments[frag].init();
-	}
-
-	window.addEventListener('hashchange',() => {process_fragment(window.location.hash);});
-	process_fragment(window.location.hash);
-
-	
-	async function upltxt_upload() {
-		const response = await fetch("/", {
-			method: "POST",
-			cache: "no-cache",
-			body: "test"
-		});
-		window.location.href = "#main";
-	}
-
-	const copy_to_clipboard = async () => {
-		let content = document.getElementById("content").innerHTML;
-		await navigator.clipboard.writeText(content);
-	}
-
-	const upload_file = async () => {
-
-	}
-
-	const upload_text = async () => {
-
-	}
+function copy_embed (){
+	const text = document.getElementById("embed_text").innerText;
+	navigator.clipboard.writeText(text);
+	alert("text clipped!");
+}
 </script>
 </html>

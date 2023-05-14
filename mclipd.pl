@@ -1,146 +1,148 @@
-use strict;
-use HTTP::Daemon;
+use Plack::Request;
+use HTTP::Server::PSGI;
 use HTTP::Status;
-use HTTP::Status qw(:constants);
-use Time::Piece;
-use MIME::Types;
 use HTML::Template;
 
-use constant CHUNKSIZE	=> 255;
-use constant MIMETYPES	=> MIME::Types->new;
+use JSON;
 
-$SIG{PIPE} = 'IGNORE'; # prevent perl from quitting if trying to write to a closed socket ???
+use constant PORT => 5000;
+use constant HOST => "127.0.0.1";
 
-my $d = HTTP::Daemon->new(
-	Host => "127.0.0.1",
-	LocalPort => 5000,
-	ReuseAddr => 1,
-	Timeout => 1
-) || die;
+my $app = \&app;
+my $server = HTTP::Server::PSGI->new(
+    host => HOST,
+    port => PORT,
+    timeout => 120
+);
 
-# print get_new_access_token(), "\n";
-print localtime->strftime('%Y%m%d-%H%M%S');
+$server->run($app);
 
-print "starting metaclip server ...\n";
-print "<URL:", $d->url, ">\n";
+my $INFO;
+my $CONTENT;
 
-my $data; # hash reference; holds all fields to describe data: content, filename, time, mimetype
+sub app {
+	my $env = shift;
+	
+	die "not suitable for multithread/-process!\n" if $env->{"psgi.multithread"} or $env->{"psgi.multiprocess"};
 
-while(1) {
-    my $c = $d->accept || next;
-    my $req = $c->get_request;
-    unless(defined $req){
-		$c->close;
-    		undef($c);
-		next;
-    }
-    
-    my $res;
-    eval{ $res = get_response($req) };
-    if($@){
-		print "$@\n";
-		$res = status_message_res(500);
-    }
-    $c->force_last_request;
-    send_response_chunked($c, $res);
-    $c->close;
-    undef($c);
-}
+	# while ( ($k,$v) = each %$env ) {
+    	# 	print "$k => $v\n";
+	# }
 
-sub send_response_chunked {
-	my ($c, $res) = @_;
-	my $cd = $res->code;
-	$res->header("transfer-encoding" => "chunked");
-	if($res->code == HTTP_NO_CONTENT){
-		$res->remove_header("content-type");
-		$res->remove_header("transfer-encoding");
-	}
-	$c->send_status_line($res->code);
-	my @fieldnames = $res->header_field_names;
-	foreach my $key (@fieldnames){
-		$c->send_header($key, $res->header($key));
+	print $env->{REQUEST_METHOD}, " - ", $env->{PATH_INFO}, "\n";
+
+	if($env->{PATH_INFO} eq '/ui'){
+		my $embed = undef;
+		if($INFO->{embed}){
+			$embed = $CONTENT->[0];
+		}
+		return res_template("ui.html", {
+			filename => $INFO->{filename},
+			time => scalar localtime $INFO->{time},
+			embed => $embed
+		});
 	}
 
-	print $c "\n";
-	return if $res->code == HTTP_NO_CONTENT;
-
-	my $i = 0;
-	while(my $chunk = substr $res->content, $i, CHUNKSIZE){
-		my $hex = sprintf("%X", length $chunk);
-		print $c $hex, "\n";
-		print $c $chunk, "\n";
-		$i += length $chunk;
-	}
-	print $c "0\n\n";
-}
-
-sub get_response {
-	my ($req) = @_;
-	print $req->method, " - ", $req->uri->path, "\n";
-
-	if($req->uri->path eq '/ui'){
-		return HTTP::Response->new(200, undef, [], "kek!");
+	if($env->{PATH_INFO} eq '/ui/text'){
+		return res_template("upfile.html");
 	}
 
-	if($req->uri->path eq '/uptext'){
-		return HTTP::Response->new(200, undef, [], "kek!");
+	if($env->{PATH_INFO} eq '/ui/file'){
+		return res_template("uptext.html");
 	}
 
-	if($req->uri->path eq '/upfile'){
-		return HTTP::Response->new(200, undef, [], "kek!");
+	if($env->{PATH_INFO} eq '/info'){
+		return [200, [], [encode_json $INFO]];
 	}
 
-	if($req->uri->path eq '/'){
+	if($env->{PATH_INFO} eq '/'){
 		# GET /
-		if($req->method eq 'GET'){
-			return status_message_res(204) unless $data->{content}; # 204 empty response!
-			if($req->uri->query eq "download"){
-				return HTTP::Response->new(200, undef, ["content-disposition" => "attachment; filename=" . $data->{filename}, "content-type" => $data->{mimetype}] || generate_filename($data->{time}), $data->{content});
-			}
-			return return HTTP::Response->new(200, undef, ["content-disposition" => "attachment; filename=" . $data->{filename}, "content-type" => $data->{mimetype}] || generate_filename($data->{time}), $data->{content});
+		if($env->{REQUEST_METHOD} eq 'GET'){
+			return res_status_message(204) unless $INFO; # 204 empty response!
+			return [200, ["Content-Disposition" => "attachment; filename=" . $INFO->{filename}, "content-type" => $INFO->{mimetype}, "X-Content-Type-Options" => "nosniff", "Cache-Control" => "no-cache"], $CONTENT];
 		}
 
 		# POST /
-		if($req->method eq "POST"){
+		if($env->{REQUEST_METHOD} eq "POST"){
 			my $filename;
-			if(my $header = $req->headers->header("content-disposition")){
-				($filename) = $header =~ /\bfilename="([^"]+)"/; # extract filename
-				$filename =~ s/[^a-zA-Z0-9_.-]/#/g; # remove funny characters and replace them with #
-			}
-			my $mime = undef;
-			unless($mime = $req->header("content-type")){
-				# check for plaintext
-				# default is octet stream, generate filename.bin
+			if(my $header = $env->{HTTP_CONTENT_DISPOSITION}){
+				($filename) = $header =~ /\bfilename=(.+)\b/; # extract filename
+				$filename =~ s/[^a-zA-Z0-9_.-]/_/g; # remove funny characters and replace them with #
 			}
 			my $time = time();
-			$data = {
-				content  => $req->content,
-				filename => $filename || $time,
+			my $length = 0;
+			($length, $CONTENT) = chop_stream($env->{"psgi.input"}, 1024);
+
+			my $mime = $env->{CONTENT_TYPE};
+			unless($mime){
+				$mime = "application/octet-stream";
+			}
+
+			$INFO = {
 				time     => $time,
-				mimetype => $mime
+				filename => $filename || $time,
+				mimetype => $mime,
+				length   => $length,
+				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1)
 			};
-			print $data->{filename}, "\n";
-			return status_message_res(200);
+			print $INFO->{filename}, "\n";
+			return res_status_message(200);
 		}
 
 		# DELETE /
-		if($req->method eq 'DELETE'){
-			$data = undef;
+		if($env->{REQUEST_METHOD} eq 'DELETE'){
+			$INFO = undef;
 			print "clipboard dumped!\n";
-			return status_message_res(200);
+			return res_status_message(200);
 		}
 	}
 
-	return status_message_res(404);
+	return res_status_message(404);
 }
 
-sub status_message_res {
+sub is_plaintext {
+	my $chunk = shift;
+	return 0 if($chunk =~ /[^ -~\t\r\n]/);
+	return 1;
+}
+
+sub is_mime_embedable {
+	my $mime = shift;
+	my $embed = [
+		"text/plain",
+		"application/json",
+		"text/csv",
+		"text/css"
+	];
+	return 1 if grep( /^$mime$/, @$embed );
+	return undef;
+}
+
+sub chop_stream {
+	my $fh = shift;
+	my $chunksize = shift || 2048;
+	my @chunks;
+	my $length = 0;
+	while(1){
+		my $chunk;
+		my $l = read $fh, $chunk, $chunksize;
+		last unless $l;
+		$length = $length + $l;
+		push @chunks, $chunk;
+	}
+	return $length,  \@chunks;
+}
+
+sub res_status_message {
 	my $code = shift;
 	my $message = status_message($code);
-	return HTTP::Response->new($code, undef, ["content-type" => "text/plain"], "$code - $message");
+	return [$code, ["content-type" => "text/plain"], ["$code - $message"]];
 }
 
-sub generate_filename {
-	my $time = shift;
-	return "file-$time";
+sub res_template {
+	my $name = shift;
+	my $args = shift;
+	my $temp = HTML::Template->new(filename => "./templates/$name");
+	$temp->param($args);
+	return [200, ["content-type" => "text/html"], [$temp->output()]];
 }
