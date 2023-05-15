@@ -14,14 +14,13 @@ use constant MIME_EMBEDABLE => [
 	"text/css"
 ];
 
-my $app = \&app;
 my $server = HTTP::Server::PSGI->new(
     host => HOST,
     port => PORT,
     timeout => 120
 );
 
-$server->run($app);
+$server->run(\&app);
 
 my $INFO;    # ref to hash containing info about the clipped file
 my $CONTENT; # array ref of chunked content of clipped file
