@@ -1,5 +1,4 @@
 use HTTP::Server::PSGI;
-use HTTP::Status;
 use HTML::Template;
 
 use JSON;
@@ -7,6 +6,13 @@ use JSON;
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
 use constant CHUNKSIZE => 2048;
+
+use constant MIME_EMBEDABLE => [
+	"text/plain",
+	"application/json",
+	"text/csv",
+	"text/css"
+];
 
 my $app = \&app;
 my $server = HTTP::Server::PSGI->new(
@@ -28,9 +34,8 @@ sub app {
 
 	if($env->{PATH_INFO} eq '/ui'){
 		my $embed = undef;
-		if($INFO->{embed}){
-			$embed = $CONTENT->[0];
-		}
+		$embed = $CONTENT->[0] if $INFO->{embed};
+
 		return res_template("ui.html", {
 			filename => $INFO->{filename},
 			time => scalar localtime $INFO->{time},
@@ -54,7 +59,7 @@ sub app {
 		# GET /
 		if($env->{REQUEST_METHOD} eq 'GET'){
 			return res_status_message(204) unless $INFO; # 204 empty response!
-			return [200, ["Content-Disposition" => "attachment; filename=" . $INFO->{filename}, "content-type" => $INFO->{mimetype}, "X-Content-Type-Options" => "nosniff", "Cache-Control" => "no-cache"], $CONTENT];
+			return [200, ["Content-Disposition" => "attachment; filename=" . $INFO->{filename} || "", "content-type" => $INFO->{mimetype}, "X-Content-Type-Options" => "nosniff", "Cache-Control" => "no-cache"], $CONTENT];
 		}
 
 		# POST /
@@ -75,7 +80,7 @@ sub app {
 				filename => $filename || $time,
 				mimetype => $mime,
 				length   => $length,
-				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1)
+				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1 and is_plaintext($CONTENT->[0]))
 			};
 			return res_status_message(200);
 		}
@@ -100,13 +105,7 @@ sub is_plaintext {
 
 sub is_mime_embedable {
 	my $mime = shift;
-	my $embed = [
-		"text/plain",
-		"application/json",
-		"text/csv",
-		"text/css"
-	];
-	return 1 if grep( /^$mime$/, @$embed );
+	return 1 if grep( /^$mime$/, @MIME_EMBEDABLE );
 	return undef;
 }
 
@@ -127,7 +126,12 @@ sub chop_stream {
 
 sub res_status_message {
 	my $code = shift;
-	my $message = status_message($code);
+	my %sts => {
+		200 => "ok",
+		404 => "not found",
+		500 => "internal error"
+	};
+	my $message = %sts{$code};
 	return [$code, ["content-type" => "text/plain"], ["$code - $message"]];
 }
 
