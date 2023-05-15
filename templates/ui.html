@@ -1,20 +1,55 @@
 <html>
-<p><TMPL_VAR NAME=TIME ESCAPE=HTML> <TMPL_VAR NAME=FILENAME ESCAPE=HTML> <TMPL_VAR NAME=SIZE ESCAPE=HTML></p>
-<p>
-	<a href="/" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
-	<a href="/" >raw</a>
-	<TMPL_IF NAME="EMBED"><a href="javascript:copy_embed();" >copy</a></TMPL_IF>
-</p>
+<body>
+<div class="header">
+	<div class="buttons">
+		<a href="/ui/text">text</a>
+		<a href="/ui/file">file</a>
+		<a href="/" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
+		<a href="/" >raw</a>
+	</div>
+	<div class="infoline">
+		<TMPL_VAR NAME=TIME ESCAPE=HTML> <TMPL_VAR NAME=FILENAME ESCAPE=HTML> <TMPL_VAR NAME=SIZE ESCAPE=HTML>
+	</div>
+</div>
+<div class="content">
 <TMPL_IF NAME="EMBED">
-<pre id="embed_text"><TMPL_VAR NAME=EMBED ESCAPE=HTML></pre>
+<pre id="embed_text" class=""><TMPL_VAR NAME=EMBED ESCAPE=HTML></pre>
 <TMPL_ELSE>
 <a href="/" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>"><TMPL_VAR NAME=FILENAME ESCAPE=HTML></a>
 </TMPL_IF>
-<script>
-function copy_embed (){
-	const text = document.getElementById("embed_text").innerText;
-	navigator.clipboard.writeText(text);
-	alert("text clipped!");
-}
-</script>
+</div>
+</body>
+<style>
+	body {
+		padding: 0px;
+		margin: 0px;
+	}
+
+	a {
+		font-family: monospace;
+		color: rgb(17, 0, 255);
+	}
+
+	.header {
+		background-color: #eef3f4;
+		padding: 10px;
+
+		& .buttons {
+			margin-bottom: 10px;
+		}
+
+		& .infoline {
+			font-family: monospace;
+			color: rgb(91, 91, 91);
+		}
+	}
+
+	.content {
+		padding: 15px;
+		& pre {
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+	}
+</style>
 </html>

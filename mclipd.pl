@@ -36,11 +36,18 @@ sub app {
 		$embed = $CONTENT->[0] if $INFO->{embed};
 		my (undef,$min,$hour,$mday,$mon,$year) = localtime $INFO->{time};
 		return res_template("ui.html", {
-			filename => $INFO->{filename},
-			time     => sprintf("%04d-%02d-%02d %02d:%02d", $year, $mon, $mday, $hour, $min),
+			filename => $INFO->{filename} || $INFO->{time},
+			time     => sprintf("%02d-%02d-%02d %02d:%02d", $year, $mon, $mday, $hour, $min),
 			embed    => $embed,
 			size     => format_size($INFO->{length})
 		});
+	}
+
+	if($env->{PATH_INFO} eq '/style.css'){
+		open(FH, "<", "./style.css") or die "cant open file!";
+		my $content = chop_stream(FH, 2048);
+		close FH;
+		return [200, ["content-type" => "file/css"], $content];
 	}
 
 	if($env->{PATH_INFO} eq '/ui/text'){
@@ -104,7 +111,8 @@ sub is_plaintext {
 
 sub is_mime_embedable {
 	my $mime = shift;
-	return 1 if grep( /^$mime$/, @MIME_EMBEDABLE );
+	my $embedable = MIME_EMBEDABLE;
+	return 1 if grep( /^$mime$/, @$embedable);
 	return undef;
 }
 
