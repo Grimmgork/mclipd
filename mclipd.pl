@@ -43,13 +43,6 @@ sub app {
 		});
 	}
 
-	if($env->{PATH_INFO} eq '/style.css'){
-		open(FH, "<", "./style.css") or die "cant open file!";
-		my $content = chop_stream(FH, 2048);
-		close FH;
-		return [200, ["content-type" => "file/css"], $content];
-	}
-
 	if($env->{PATH_INFO} eq '/ui/text'){
 		return res_template("upfile.html");
 	}
@@ -63,10 +56,17 @@ sub app {
 	}
 
 	if($env->{PATH_INFO} eq '/'){
-		# GET /
-		if($env->{REQUEST_METHOD} eq 'GET'){
+		# GET HEAD /
+		if($env->{REQUEST_METHOD} eq 'GET' or $env->{REQUEST_METHOD} eq 'HEAD'){
 			return res_status_message(204) unless $INFO; # 204 empty response!
-			return [200, ["Content-Disposition" => "attachment; filename=" . $INFO->{filename} || "", "content-type" => $INFO->{mimetype}, "X-Content-Type-Options" => "nosniff", "Cache-Control" => "no-cache"], $CONTENT];
+			my $header = [
+				"content-type"        => $INFO->{mimetype},
+				"content-disposition" => "attachment; filename=" . $INFO->{filename},
+				"cache-control"       => "no-cache",
+				"content-length"      => $INFO->{length},
+				"etag"                => $INFO->{time}
+			];
+			return [200, $header, $env->{REQUEST_METHOD} eq 'HEAD' ? [] : $CONTENT];
 		}
 
 		# POST /
@@ -79,13 +79,15 @@ sub app {
 			
 			my $mime = $env->{CONTENT_TYPE} || "application/octet-stream";
 
-			my $length = 0;
-			($length, $CONTENT) = chop_stream($env->{"psgi.input"}, CHUNKSIZE);
+			my ($length, $chunks) = chop_stream($env->{"psgi.input"}, CHUNKSIZE);
+			return res_status_message(400) unless $length;
+			$CONTENT = $chunks;
 			$INFO = {
 				time     => time(),
 				filename => $filename || $time,
 				mimetype => $mime,
 				length   => $length,
+				plaintext => is_plaintext($CONTENT->[0]),
 				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1 and is_plaintext($CONTENT->[0]))
 			};
 			return res_status_message(200);
@@ -95,7 +97,6 @@ sub app {
 		if($env->{REQUEST_METHOD} eq 'DELETE'){
 			$INFO = undef;
 			$CONTENT = undef;
-			print "clipboard dumped!\n";
 			return res_status_message(200);
 		}
 	}
@@ -117,7 +118,7 @@ sub is_mime_embedable {
 }
 
 sub format_size {
-	my $str = "".shift."b";
+	my $str = shift."b";
 	my $units = ["kb", "mb", "gb", "tb", "pb"];
 	my $lu = "b";
 	foreach(@$units){
@@ -139,17 +140,16 @@ sub chop_stream {
 		$length = $length + $l;
 		push @chunks, $chunk;
 	}
-	return $length,  \@chunks;
+	return $length, \@chunks;
 }
 
 sub res_status_message {
 	my $code = shift;
-	my %sts => {
+	my $message = {
 		200 => "ok",
 		404 => "not found",
-		500 => "internal error"
-	};
-	my $message = %sts{$code};
+		400 => "bad request"
+	}->{$code.""};
 	return [$code, ["content-type" => "text/plain"], ["$code - $message"]];
 }
 
