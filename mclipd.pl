@@ -5,7 +5,7 @@ use JSON;
 
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
-use constant CHUNKSIZE => 2048;
+use constant CHUNKSIZE => 100;
 
 use constant MIME_EMBEDABLE => [
 	"text/plain",
@@ -28,8 +28,26 @@ my $CONTENT; # array ref of chunked content of clipped file
 sub app {
 	my $env = shift;
 	die "not suitable for multithreading/forking!\n" if $env->{"psgi.multithread"} or $env->{"psgi.multiprocess"};
-
 	print $env->{REQUEST_METHOD}, " - ", $env->{PATH_INFO}, "\n";
+
+	my $res;
+	eval {
+		$res = get_response($env);
+	};
+	if($@) {
+		print "#ERROR: $@";
+		return res_status_message(500);
+	}
+
+	return $res;
+}
+
+sub get_response {
+	my $env = shift;
+
+	if($env->{PATH_INFO} eq '/'){
+		return res_temp_redirect('/ui');
+	}
 
 	if($env->{PATH_INFO} eq '/ui'){
 		my $embed = undef;
@@ -37,34 +55,46 @@ sub app {
 		my (undef,$min,$hour,$mday,$mon,$year) = localtime $INFO->{time};
 		return res_template("ui.html", {
 			filename => $INFO->{filename} || $INFO->{time},
-			time     => sprintf("%02d-%02d-%02d %02d:%02d", $year, $mon, $mday, $hour, $min),
+			time     => sprintf("%02d-%02d-%02d %02d:%02d", $year+1900, $mon, $mday, $hour, $min),
 			embed    => $embed,
-			size     => format_size($INFO->{length})
+			size     => format_size($INFO->{length}),
+			etag     => $INFO->{etag}
 		});
 	}
 
 	if($env->{PATH_INFO} eq '/ui/text'){
-		return res_template("upfile.html");
+		return res_template("uptext.html", {});
 	}
 
 	if($env->{PATH_INFO} eq '/ui/file'){
-		return res_template("uptext.html");
+		return res_template("upfile.html", {});
+	}
+
+	if($env->{PATH_INFO} eq '/style'){
+		return res_file("./style.css");
 	}
 
 	if($env->{PATH_INFO} eq '/info'){
 		return [200, [], [encode_json $INFO]];
 	}
 
-	if($env->{PATH_INFO} eq '/'){
-		# GET HEAD /
+	if($env->{PATH_INFO} eq '/data'){
+		# GET HEAD /data
 		if($env->{REQUEST_METHOD} eq 'GET' or $env->{REQUEST_METHOD} eq 'HEAD'){
-			return res_status_message(204) unless $INFO; # 204 empty response!
+			return res_no_content() unless $CONTENT;
+
+			if($env->{QUERY_STRING}){
+				unless($env->{QUERY_STRING} eq $INFO->{etag}){
+					return res_no_content();
+				}
+			}
+			
 			my $header = [
 				"content-type"        => $INFO->{mimetype},
-				"content-disposition" => "attachment; filename=" . $INFO->{filename},
 				"cache-control"       => "no-cache",
 				"content-length"      => $INFO->{length},
-				"etag"                => $INFO->{time}
+				"etag"                => $INFO->{etag},
+				"content-disposition" => ($env->{QUERY_STRING} eq "attachment" ? "attachment" : "inline")."; filename=\"".$INFO->{filename}."\""
 			];
 			return [200, $header, $env->{REQUEST_METHOD} eq 'HEAD' ? [] : $CONTENT];
 		}
@@ -81,14 +111,15 @@ sub app {
 
 			my ($length, $chunks) = chop_stream($env->{"psgi.input"}, CHUNKSIZE);
 			return res_status_message(400) unless $length;
+			my $time = time();
 			$CONTENT = $chunks;
 			$INFO = {
-				time     => time(),
+				time     => $time,
 				filename => $filename || $time,
 				mimetype => $mime,
 				length   => $length,
-				plaintext => is_plaintext($CONTENT->[0]),
-				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1 and is_plaintext($CONTENT->[0]))
+				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1 and is_plaintext($CONTENT->[0])),
+				etag     => $time
 			};
 			return res_status_message(200);
 		}
@@ -143,14 +174,32 @@ sub chop_stream {
 	return $length, \@chunks;
 }
 
+sub res_temp_redirect {
+	my $location = shift;
+	return [307, ["Location" => $location], []];
+}
+
 sub res_status_message {
 	my $code = shift;
 	my $message = {
 		200 => "ok",
 		404 => "not found",
-		400 => "bad request"
-	}->{$code.""};
+		400 => "bad request",
+		500 => "internal server error :["
+	}->{"$code"};
+	unless($message){
+		$message = shift || "";
+	} 
 	return [$code, ["content-type" => "text/plain"], ["$code - $message"]];
+}
+
+sub res_ok {
+	return [200, shift || [], shift || []];
+}
+
+sub res_no_content {
+	print "res no content\n";
+	return [204, [], []];
 }
 
 sub res_template {
@@ -159,4 +208,13 @@ sub res_template {
 	my $temp = HTML::Template->new(filename => "./templates/$name");
 	$temp->param($args);
 	return [200, ["content-type" => "text/html"], [$temp->output()]];
+}
+
+sub res_file {
+	my $file = shift;
+	return res_status_message(404) unless -e $file;
+	open(my $fh, "<", $file) or die "cannot read file $file\n";
+	my ($length, $chunks) = chop_stream($fh, CHUNKSIZE);
+	close $fh;
+	return [200, ['cache-control' => 'max-age=3600'], $chunks];
 }

@@ -1,0 +1,43 @@
+<html>
+<head>
+	<link rel="stylesheet" href="/style">
+	<title>mclip ~</title>
+</head>
+<body>
+<div class="header">
+	<div class="buttons">
+		<a href="/ui">home</a>
+	</div>
+	<div class="infoline">
+		upload a file
+	</div>
+</div>
+<div class="content">
+	<input type="file" id="file">
+</div>
+<p id="error" class="err"></p>
+
+<script>
+const $input = document.querySelector('#file');
+const $err = document.querySelector('#error');
+$input.addEventListener('change', event => {
+	$input.disabled = true;
+	fetch('/data', {
+		method: 'post',
+		body: event.target.files[0],
+		headers: new Headers({
+			"Content-Type": $input.files[0].type,
+			"Content-Disposition" : "filename=\"" + $input.files[0].name + "\""
+		})
+	}).then(res => {
+		if(res.status == 200){
+			window.location.href = '/ui';
+			return 0;
+		}
+		$input.disabled = false;
+     	$err.innerHTML = "error: " + res.status;
+	})
+})
+</script>
+</body>
+</html>

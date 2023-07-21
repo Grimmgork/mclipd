@@ -1,0 +1,52 @@
+<html>
+<head>
+	<link rel="stylesheet" href="/style">
+	<title>mclip ~</title>
+</head>
+<body>
+<div class="header">
+	<div class="buttons">
+		<a href="/ui">home</a>
+	</div>
+	<div class="infoline">
+		upload text
+	</div>
+</div>
+<div class="content">
+	<textarea rows="8" cols="45" id="t_area"></textarea>
+	<div>
+		<button id="b_upload">upload</input>
+		<button id="b_clear">clear</input>
+	</div>
+	<p id="status" class="err"></p>
+</div>
+
+<script>
+const $tar = document.querySelector('#t_area');
+const $bup = document.querySelector('#b_upload');
+const $bclr = document.querySelector('#b_clear');
+const $sts = document.querySelector('#status');
+$bup.addEventListener('click', event => {
+	$sts.innerHTML = "";
+	$bup.disabled = true;
+	fetch('/data', {
+		method: 'post',
+		body: $tar.value,
+		headers: new Headers({
+			"Content-Type": "text/plain"
+		})
+	}).then(res => {
+		if(res.status == 200){
+			window.location.href = '/ui';
+			return 0;
+		}
+		$bup.disabled = false;
+     	$sts.innerHTML = "error: " + res.status;
+	})
+})
+$bclr.addEventListener('click', event => {
+	$tar.value = "";
+})
+</script>
+</body>
+</html>
