@@ -1,4 +1,5 @@
 body {
+	background-color: white;
 	padding: 0px;
 	margin: 0px;
 }
@@ -11,21 +12,24 @@ a {
 .header {
 	background-color: #eef3f4;
 	padding: 10px;
-	& .buttons {
-		margin-bottom: 10px;
-	}
-	& .infoline {
-		font-family: monospace;
-		color: rgb(91, 91, 91);
-	}
+}
+
+.buttons {
+	margin-bottom: 10px;
+}
+
+.infoline {
+	font-family: monospace;
+	color: rgb(91, 91, 91);
 }
 
 .content {
 	padding: 15px;
-	& pre {
-		margin-top: 0;
-		margin-bottom: 0;
-	}
+}
+
+.content pre {
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .err {
