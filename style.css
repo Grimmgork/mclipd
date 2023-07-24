@@ -14,11 +14,11 @@ a {
 	padding: 10px;
 }
 
-.buttons {
+.header .buttons {
 	margin-bottom: 10px;
 }
 
-.infoline {
+.header .infoline {
 	font-family: monospace;
 	color: rgb(91, 91, 91);
 }
@@ -28,6 +28,7 @@ a {
 }
 
 .content pre {
+	font-family: monospace;
 	margin-top: 0;
 	margin-bottom: 0;
 }
