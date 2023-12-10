@@ -5,20 +5,22 @@
 </head>
 <body>
 <div class="header">
-	<div class="buttons">
-		<a href="/ui">home</a>
-	</div>
-	<div class="infoline">
-		upload text snippet
+	<div>
+		<div class="buttons">
+			<a href="/ui">clipboard</a>
+			<a thispage href="/ui/text">text</a>
+			<a href="/ui/file">file</a>
+			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
+			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>">raw</a>
+			<a href="/ui/info">info</a>
+		</div>
+		<div class="infoline">
+			upload text snippet
+		</div>
 	</div>
 </div>
 <div class="content">
-	<textarea rows="8" cols="45" id="t_area"></textarea>
-	<div>
-		<button id="b_upload">upload</input>
-		<button id="b_clear">clear</input>
-	</div>
-	<p id="status" class="err"></p>
+<div><textarea rows="8" id="t_area"></textarea><div><button id="b_upload">upload</input><button id="b_clear">clear</input></div><p id="status" class="err"></p></div>
 </div>
 
 <script>

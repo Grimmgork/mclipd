@@ -1,17 +1,66 @@
+:root {
+	--content-width: 600px;
+	--color-background: white;
+	--color-background-header: #eef3f4;
+	--color-primary: #1100ff;
+	--color-primary-transparent: #1100ff14;
+	--color-error: red;
+	--color-text: black;
+	--color-text-light: rgb(91, 91, 91);
+}
+
+/* :root {
+	--content-width: 600px;
+	--color-background: #1d1f1e;
+	--color-background-header: #292b2b;
+	--color-primary: rgb(88, 77, 255);
+	--color-error: red;
+	--color-text: white;
+	--color-text-light: rgb(98, 98, 98);
+} */
+
 body {
-	background-color: white;
+	font-family: monospace;
+	color: var(--color-text);
+	background-color: var(--color-background);
 	padding: 0px;
 	margin: 0px;
 }
 
-a {
-	font-family: monospace;
-	color: rgb(17, 0, 255);
+.header {
+	background-color: var(--color-background-header);
+	box-shadow: 0 0px 10px 0px #0000002c;
 }
 
-.header {
-	background-color: #eef3f4;
+a {
+	color: var(--color-primary);
+}
+
+button {
+	color: var(--color-primary);
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+button:hover {
+	background-color: var(--color-primary-transparent);
+}
+
+button:disabled {
+	color: var(--color-text-light);
+	background-color: transparent;
+}
+
+.buttons a[thispage] {
+	background-color: var(--color-primary-transparent);
+}
+
+.header > div:first-of-type {
 	padding: 10px;
+	max-width: var(--content-width);
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .header .buttons {
@@ -19,21 +68,31 @@ a {
 }
 
 .header .infoline {
-	font-family: monospace;
-	color: rgb(91, 91, 91);
+	color: var(--color-text-light);
 }
 
-.content {
+.header .infoline .filesize {
+	float: right;
+}
+
+.content > div:first-of-type {
 	padding: 15px;
+	max-width: var(--content-width);
+	margin-left: auto;
+	margin-right: auto;
 }
 
-.content pre {
-	font-family: monospace;
-	margin-top: 0;
-	margin-bottom: 0;
+.content .text-embed {
+	white-space: pre-wrap
+}
+
+.content textarea {
+	width: 100%;
+	resize: vertical;
+	border: 1px solid var(--color-text-light);
+	outline: none;
 }
 
 .err {
-	color: red;
-	font-family: monospace;
+	color: var(--color-error);
 }

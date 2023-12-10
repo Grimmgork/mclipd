@@ -5,7 +5,7 @@ use JSON;
 
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
-use constant CHUNKSIZE => 100;
+use constant CHUNKSIZE => 1200;
 
 use constant MIME_EMBEDABLE => [
 	"text/plain",
@@ -63,11 +63,11 @@ sub get_response {
 	}
 
 	if($env->{PATH_INFO} eq '/ui/text'){
-		return res_template("uptext.html", {});
+		return res_template("uptext.html", { etag => $INFO->{etag} });
 	}
 
 	if($env->{PATH_INFO} eq '/ui/file'){
-		return res_template("upfile.html", {});
+		return res_template("upfile.html", { etag => $INFO->{etag} });
 	}
 
 	if($env->{PATH_INFO} eq '/style'){
@@ -118,7 +118,7 @@ sub get_response {
 				filename => $filename || $time,
 				mimetype => $mime,
 				length   => $length,
-				embed    => (is_mime_embedable($mime) and length @$CONTENT == 1 and is_plaintext($CONTENT->[0])),
+				embed    => (is_mime_embedable($mime) and @$CONTENT == 1 and is_plaintext($CONTENT->[0])),
 				etag     => $time
 			};
 			return res_status_message(200);
@@ -137,7 +137,7 @@ sub get_response {
 
 sub is_plaintext {
 	my $chunk = shift;
-	return 0 if($chunk =~ /[^ -~\t\r\n]/);
+	return undef if($chunk =~ /[^ -~\t\r\n]/);
 	return 1;
 }
 
@@ -149,7 +149,7 @@ sub is_mime_embedable {
 }
 
 sub format_size {
-	my $str = shift."b";
+	my $str = (shift || 0)."b";
 	my $units = ["kb", "mb", "gb", "tb", "pb"];
 	my $lu = "b";
 	foreach(@$units){
