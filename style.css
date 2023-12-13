@@ -3,10 +3,11 @@
 	--color-background: white;
 	--color-background-header: #eef3f4;
 	--color-primary: #1100ff;
-	--color-primary-transparent: #1100ff14;
+	--color-primary-transparent: #1100ff1f;
 	--color-error: red;
 	--color-text: black;
 	--color-text-light: rgb(91, 91, 91);
+	font-family: monospace;
 }
 
 /* :root {
@@ -20,20 +21,18 @@
 } */
 
 body {
-	font-family: monospace;
 	color: var(--color-text);
 	background-color: var(--color-background);
 	padding: 0px;
 	margin: 0px;
 }
 
-.header {
-	background-color: var(--color-background-header);
-	box-shadow: 0 0px 10px 0px #0000002c;
-}
-
 a {
 	color: var(--color-primary);
+}
+
+a[thispage] {
+	background-color: var(--color-primary-transparent);
 }
 
 button {
@@ -41,6 +40,10 @@ button {
 	background-color: transparent;
 	border: none;
 	cursor: pointer;
+	padding-right: 5px;
+	padding-left: 5px;
+	padding-top: 2px;
+	padding-bottom: 2px;
 }
 
 button:hover {
@@ -52,47 +55,56 @@ button:disabled {
 	background-color: transparent;
 }
 
-.buttons a[thispage] {
-	background-color: var(--color-primary-transparent);
-}
-
-.header > div:first-of-type {
-	padding: 10px;
-	max-width: var(--content-width);
-	margin-left: auto;
-	margin-right: auto;
-}
-
-.header .buttons {
-	margin-bottom: 10px;
-}
-
-.header .infoline {
-	color: var(--color-text-light);
-}
-
-.header .infoline .filesize {
-	float: right;
-}
-
-.content > div:first-of-type {
-	padding: 15px;
-	max-width: var(--content-width);
-	margin-left: auto;
-	margin-right: auto;
-}
-
-.content .text-embed {
-	white-space: pre-wrap
-}
-
-.content textarea {
+textarea {
 	width: 100%;
 	resize: vertical;
 	border: 1px solid var(--color-text-light);
 	outline: none;
 }
 
-.err {
+.navbar {
+	margin-bottom: 10px;
+}
+
+.buttongroup {
+	margin: 3px;
+}
+
+.header {
+	background-color: var(--color-background-header);
+	box-shadow: 0 0px 10px 0px #0000002c;
+}
+
+.header-container {
+	padding: 10px;
+	max-width: var(--content-width);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.header-infoline {
+	color: var(--color-text-light);
+}
+
+.header-infoline-filesize {
+	float: right;
+}
+
+.content {
+	background-color: var(--color-background);
+}
+
+.content-container {
+	padding: 15px;
+	max-width: var(--content-width);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.content-embed {
+	white-space: pre-wrap
+}
+
+.error-text {
 	color: var(--color-error);
 }

@@ -5,24 +5,26 @@
 </head>
 <body>
 	<div class="header">
-		<div>
-			<div class="buttons">
+		<div class="header-container">
+			<div class="navbar">
 				<a href="/ui">clipboard</a>
-				<a href="/ui/text">text</a>
-				<a thispage href="/ui/file">file</a>
+				<a thispage href="/ui/upload/text">upload</a>
 				<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
 				<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>">raw</a>
-				<a href="/ui/info">info</a>
 			</div>
-			<div class="infoline">
+			<div class="header-infoline">
 				upload a file
 			</div>
 		</div>
 	</div>
 <div class="content">
-<div><input type="file" id="file">
-<p id="error" class="err"></p>
-</div>
+	<div class="content-container">
+		<div class="navbar">
+			<a href="/ui/upload/text">text</a> <a thispage href="/ui/upload/file">file</a>
+		</div>
+		<input type="file" id="file">
+		<p id="error" class="err"></p>
+	</div>
 </div>
 
 

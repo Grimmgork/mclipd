@@ -5,28 +5,27 @@
 </head>
 <body>
 <div class="header">
-	<div>
-		<div class="buttons">
+	<div class="header-container">
+		<div class="navbar">
 			<a thispage href="/ui">clipboard</a>
-			<a href="/ui/text">text</a>
-			<a href="/ui/file">file</a>
+			<a href="/ui/upload/text">upload</a>
 			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
 			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>">raw</a>
 		</div>
-		<div class="infoline">
+		<div class="header-infoline">
 			<span><TMPL_VAR NAME=TIME ESCAPE=HTML> <TMPL_VAR NAME=FILENAME ESCAPE=HTML></span>
-			<span class="filesize"><TMPL_VAR NAME=SIZE ESCAPE=HTML></span>
+			<span class="header-infoline-filesize"><TMPL_VAR NAME=SIZE ESCAPE=HTML></span>
 		</div>
 	</div>
 </div>
 <div class="content">
-<TMPL_IF NAME="EMBED">
-	<div class="text-content"><TMPL_VAR NAME=EMBED ESCAPE=HTML></div>
-<TMPL_ELSE>
-	<div>
-		<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>"><TMPL_VAR NAME=FILENAME ESCAPE=HTML></a>
-	</div>
-</TMPL_IF>
+	<TMPL_IF NAME="EMBED">
+		<div class="content-container content-embed"><TMPL_VAR NAME=EMBED ESCAPE=HTML></div>
+	<TMPL_ELSE>
+		<div class="content-container">
+			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>"><TMPL_VAR NAME=FILENAME ESCAPE=HTML></a>
+		</div>
+	</TMPL_IF>
 </div>
 </body>
 </html>

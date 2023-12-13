@@ -62,16 +62,20 @@ sub get_response {
 		});
 	}
 
-	if($env->{PATH_INFO} eq '/ui/text'){
+	if($env->{PATH_INFO} eq '/ui/upload/text'){
 		return res_template("uptext.html", { etag => $INFO->{etag} });
 	}
 
-	if($env->{PATH_INFO} eq '/ui/file'){
+	if($env->{PATH_INFO} eq '/ui/upload/file'){
 		return res_template("upfile.html", { etag => $INFO->{etag} });
 	}
 
-	if($env->{PATH_INFO} eq '/style'){
+	if($env->{PATH_INFO} eq '/style') {
 		return res_file("./style.css");
+	}
+
+	if($env->{PATH_INFO} eq '/favicon.ico') {
+		return res_file("./favicon.ico");
 	}
 
 	if($env->{PATH_INFO} eq '/info'){

@@ -5,24 +5,30 @@
 </head>
 <body>
 <div class="header">
-	<div>
-		<div class="buttons">
+	<div class="header-container">
+		<div class="navbar">
 			<a href="/ui">clipboard</a>
-			<a thispage href="/ui/text">text</a>
-			<a href="/ui/file">file</a>
+			<a thispage href="/ui/upload/text">upload</a>
 			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>" download="<TMPL_VAR NAME=FILENAME ESCAPE=HTML>">download</a>
 			<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>">raw</a>
-			<a href="/ui/info">info</a>
 		</div>
-		<div class="infoline">
+		<div class="header-infoline">
 			upload text snippet
 		</div>
 	</div>
 </div>
 <div class="content">
-<div><textarea rows="8" id="t_area"></textarea><div><button id="b_upload">upload</input><button id="b_clear">clear</input></div><p id="status" class="err"></p></div>
+	<div class="content-container">
+		<div class="navbar">
+			<a thispage href="/ui/upload/text">text</a> <a href="/ui/upload/file">file</a>
+		</div>
+		<textarea rows="8" id="t_area" placeholder="lorem ipsum ..."></textarea>
+		<div class="buttongroup">
+			<button id="b_upload">upload</button><button id="b_clear">clear</button>
+		</div>
+		<p id="status" class="error-text"></p>
+	</div>
 </div>
-
 <script>
 const $tar = document.querySelector('#t_area');
 const $bup = document.querySelector('#b_upload');
