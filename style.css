@@ -30,6 +30,7 @@ body {
 
 a {
 	color: var(--color-primary);
+	text-decoration: underline blue 1px;
 }
 
 a[thispage] {
@@ -74,7 +75,7 @@ textarea {
 
 .header {
 	background-color: var(--color-background-header);
-	box-shadow: 0 0px 10px 0px #0000002c;
+	box-shadow: 0 0px 10px 0px #00000054;
 }
 
 .header-container {
