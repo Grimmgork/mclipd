@@ -5,7 +5,7 @@ use JSON;
 
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
-use constant CHUNKSIZE => 1200;
+use constant CHUNKSIZE => 2048;
 
 use constant MIME_EMBEDABLE => [
 	"text/plain",
