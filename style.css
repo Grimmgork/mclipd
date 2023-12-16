@@ -1,4 +1,4 @@
-:root {
+/* :root {
 	--content-width: 600px;
 	--color-background: white;
 	--color-background-header: #eef3f4;
@@ -8,18 +8,19 @@
 	--color-text: black;
 	--color-text-light: rgb(91, 91, 91);
 	font-family: monospace;
-}
+} */
 
-/* :root {
+:root {
 	--content-width: 600px;
 	--color-background: #1d1f1e;
 	--color-background-header: #292b2b;
-	--color-primary: rgb(88, 77, 255);
-	--color-error: red;
-	--color-text: white;
-	--color-text-light: rgb(98, 98, 98);
+	--color-primary: #1852ff;
+	--color-primary-transparent: #0058ff2e;
+	--color-error: rgb(255, 31, 31);
+	--color-text: whitesmoke;
+	--color-text-light: rgba(255, 255, 255, 0.25);
 	font-family: monospace;
-} */
+}
 
 body {
 	color: var(--color-text);
@@ -30,7 +31,7 @@ body {
 
 a {
 	color: var(--color-primary);
-	text-decoration: underline blue 1px;
+	text-decoration: underline var(--color-primary) 1px;
 }
 
 a[thispage] {
@@ -60,9 +61,15 @@ button:disabled {
 textarea {
 	width: 100%;
 	resize: vertical;
-	border: 1px solid var(--color-text-light);
+	border: 0;
 	outline: none;
 	padding: 3px;
+	color: var(--color-text);
+	background-color: var(--color-background-header);
+}
+
+textarea::placeholder {
+	color: var(--color-text-light);
 }
 
 .navbar {
