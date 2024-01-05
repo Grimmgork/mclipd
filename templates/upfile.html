@@ -5,8 +5,8 @@
 	<title>mclip</title>
 </head>
 <body>
-	<div class="header">
-		<div class="header-container">
+	<div class="container">
+		<div class="header">
 			<div class="navbar">
 				<a href="/ui">clipboard</a>
 				<a thispage href="/ui/upload/text">upload</a>
@@ -17,18 +17,14 @@
 				upload a file
 			</div>
 		</div>
-	</div>
-<div class="content">
-	<div class="content-container">
-		<div class="navbar">
-			<a href="/ui/upload/text">text</a> <a thispage href="/ui/upload/file">file</a>
+		<div class="content">
+			<div class="navbar">
+				<a href="/ui/upload/text">text</a> <a thispage href="/ui/upload/file">file</a>
+			</div>
+			<input type="file" id="file">
+			<p id="error" class="err"></p>
 		</div>
-		<input type="file" id="file">
-		<p id="error" class="err"></p>
 	</div>
-</div>
-
-
 <script>
 const $input = document.querySelector('#file');
 const $err = document.querySelector('#error');

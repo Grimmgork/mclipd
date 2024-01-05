@@ -11,10 +11,11 @@
 } */
 
 :root {
-	--content-width: 600px;
-	--color-background: #1d1f1e;
+	--content-width: 800px;
+	--color-background-content: #1d1f1e;
 	--color-background-header: #292b2b;
-	--color-primary: #1852ff;
+	--color-backdrop: #181a1a;
+	--color-primary: #1869ff;
 	--color-primary-transparent: #0058ff2e;
 	--color-error: rgb(255, 31, 31);
 	--color-text: whitesmoke;
@@ -24,7 +25,7 @@
 
 body {
 	color: var(--color-text);
-	background-color: var(--color-background);
+	background-color: var(--color-backdrop);
 	padding: 0px;
 	margin: 0px;
 }
@@ -80,16 +81,22 @@ textarea::placeholder {
 	margin: 3px;
 }
 
-.header {
-	background-color: var(--color-background-header);
-	box-shadow: 0 0px 10px 0px #00000054;
-}
-
-.header-container {
-	padding: 10px;
+.container {
 	max-width: var(--content-width);
 	margin-left: auto;
 	margin-right: auto;
+	display: flex;
+	flex-flow: column;
+	height: 100vh;
+}
+
+.header {
+	background-color: var(--color-background-header);
+	box-shadow: 0 0px 10px 0px #00000054;
+	padding-top: 0.5rem;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	padding-bottom: 1rem;
 }
 
 .header-infoline {
@@ -101,14 +108,11 @@ textarea::placeholder {
 }
 
 .content {
-	background-color: transparent;
-}
-
-.content-container {
-	padding: 15px;
-	max-width: var(--content-width);
-	margin-left: auto;
-	margin-right: auto;
+	background-color: var(--color-background-content);
+	padding: 1rem;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;;
+	flex-grow: 1;
 }
 
 .content-embed {
