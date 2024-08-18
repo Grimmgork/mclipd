@@ -32,11 +32,19 @@ body {
 
 a {
 	color: var(--color-primary);
+	text-decoration: none;
+	cursor: pointer;
+	user-select: none;
+}
+
+a:hover {
 	text-decoration: underline var(--color-primary) 1px;
 }
 
 a[thispage] {
 	background-color: var(--color-primary-transparent);
+	text-decoration: none;
+	cursor: default;
 }
 
 button {
@@ -59,6 +67,15 @@ button:disabled {
 	background-color: transparent;
 }
 
+.filepicker {
+	cursor: pointer;
+}
+
+.dropzone {
+	height: 5rem;
+	background-color: red;
+}
+
 textarea {
 	width: 100%;
 	resize: vertical;
@@ -66,7 +83,7 @@ textarea {
 	outline: none;
 	padding: 3px;
 	color: var(--color-text);
-	background-color: var(--color-background-header);
+	background-color: var(--color-backdrop);
 }
 
 textarea::placeholder {
@@ -96,7 +113,7 @@ textarea::placeholder {
 	padding-top: 0.8rem;
 	padding-left: 1rem;
 	padding-right: 1rem;
-	padding-bottom: 1.3rem;
+	padding-bottom: 1.25rem;
 }
 
 .header-infoline {

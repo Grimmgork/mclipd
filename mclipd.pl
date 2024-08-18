@@ -62,11 +62,7 @@ sub get_response {
 		});
 	}
 
-	if($env->{PATH_INFO} eq '/ui/upload/text'){
-		return res_template("uptext.html", { etag => $INFO->{etag} });
-	}
-
-	if($env->{PATH_INFO} eq '/ui/upload/file'){
+	if($env->{PATH_INFO} eq '/ui/upload'){
 		return res_template("upfile.html", { etag => $INFO->{etag} });
 	}
 
@@ -202,7 +198,6 @@ sub res_ok {
 }
 
 sub res_no_content {
-	print "res no content\n";
 	return [204, [], []];
 }
 
