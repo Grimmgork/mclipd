@@ -21,5 +21,4 @@ POST   /data       upload a file, filename is set by using "content-disposition:
 GET    /info       returns information about the clipped data in json format
 
 GET    /ui         shows a simple ui, small text snippets will be embedded for convenient access.
-GET    /ui/upload/text    shows a ui to upload a small piece of text to the clipboard
-GET    /ui/upload/file    shows a ui to upload a file to the clipboard
+GET    /ui/upload    shows a ui to upload content to the clipboard
