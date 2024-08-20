@@ -21,7 +21,7 @@
 	--color-error: rgb(255, 31, 31);
 	--color-text: whitesmoke;
 	--color-text-light: rgba(255, 255, 255, 0.33);
-	font-family: monospace;
+	font-family: consolas;
 }
 
 body {
