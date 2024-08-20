@@ -14,21 +14,20 @@
 				<a href="/data?<TMPL_VAR NAME=ETAG ESCAPE=HTML>">raw</a>
 			</div>
 			<div class="header-infoline">
-				upload content
+				upload content:
 			</div>
 		</div>
 		<div class="content">
 			<div class="navbar">
+				<a id="btn_upload">submit</a>
+				<a id="btn_clear">clear</a>
 				<label class="filepicker">
 					<input style="display: none;" type="file" id="file">
 					<a>file</a>
 				</label>
 			</div>
-			
-			<textarea id="textarea" rows="6" spellcheck="false" placeholder="lorem ipsum ..."></textarea>
-			<a id="btn_upload">upload</a>
-			<a id="btn_clear">clear</a>
 			<p id="error" class="error-text"></p>
+			<textarea id="textarea" rows="6" spellcheck="false" placeholder="enter text ..."></textarea>
 		</div>
 	</div>
 <script>
@@ -62,6 +61,7 @@ $input_file.addEventListener('change', event => {
 // clear textarea
 $btn_clear.addEventListener('click', event => {
 	$input_text.value = "";
+	$err.innerHTML = "";
 });
 
 // upload text file

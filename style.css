@@ -15,11 +15,12 @@
 	--color-background-content: #1d1f1e;
 	--color-background-header: #292b2b;
 	--color-backdrop: #181a1a;
-	--color-primary: #1869ff;
+	--color-primary: #1856ff;
 	--color-primary-transparent: #0058ff2e;
+	--color-primary-light: #2b63fb;
 	--color-error: rgb(255, 31, 31);
 	--color-text: whitesmoke;
-	--color-text-light: rgba(255, 255, 255, 0.25);
+	--color-text-light: rgba(255, 255, 255, 0.33);
 	font-family: monospace;
 }
 
@@ -39,9 +40,11 @@ a {
 
 a:hover {
 	text-decoration: underline var(--color-primary) 1px;
+	color: var(--color-primary-light);
 }
 
 a[thispage] {
+	color: var(--color-primary);
 	background-color: var(--color-primary-transparent);
 	text-decoration: none;
 	cursor: default;
@@ -109,11 +112,12 @@ textarea::placeholder {
 
 .header {
 	background-color: var(--color-background-header);
-	box-shadow: 0 0px 10px 0px #00000054;
+	box-shadow: 0 0px 10px 0px #0505054d;
 	padding-top: 0.8rem;
 	padding-left: 1rem;
 	padding-right: 1rem;
 	padding-bottom: 1.25rem;
+	z-index: 1;
 }
 
 .header-infoline {
