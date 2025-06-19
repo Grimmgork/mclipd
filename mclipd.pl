@@ -14,7 +14,6 @@ use constant MIME_EMBEDABLE => [
 	"text/css"
 ];
 
-
 my $routes = [
 	["GET", "/", sub {
 		return res_temp_redirect('/ui');
