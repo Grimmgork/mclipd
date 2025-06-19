@@ -1,0 +1,26 @@
+<div class="header">
+	<div class="navbar">
+		<a hx-get="/ui/file" hx-target=".container">clipboard</a>
+		<a hx-get="/ui/upload" hx-target=".container" thispage >upload</a>
+		<a href="/data?{{etag}}" download="{{filename}}">download</a>
+		<a href="/data?{{etag}}">raw</a>
+	</div>
+	<div class="header-infoline">upload content:</div>
+</div>
+<div class="content">
+	<div class="navbar">
+		<a id="submitButton">submit</a>
+		<a id="clearButton" hx-target=".container" hx-get='/ui/upload' hx-trigger="click">clear</a>
+		<form hx-encoding='multipart/form-data' hx-target=".container" hx-post='/ui/data' hx-trigger="change from:#fileInput" hx-indicator="#spinner" style="display: inline;">
+			<label class="filepicker">
+				<input name="data" id="fileInput" style="display: none;" type="file">
+				<a>file</a>
+			</label>
+		<form>
+	</div>
+	<div id="spinner" class="loading-spinner"></div>
+	<p id="error" class="error-text"></p>
+	<form hx-encoding='multipart/form-data' hx-target=".container" hx-post='/ui/data' hx-trigger="click from:#submitButton" hx-indicator="#spinner">
+		<textarea id="textarea" name="data" type="text" rows="6" spellcheck="false" required placeholder="enter text ..."></textarea>
+	</form>
+</div>

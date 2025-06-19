@@ -15,12 +15,13 @@
 	--color-background-content: #1d1f1e;
 	--color-background-header: #292b2b;
 	--color-backdrop: #181a1a;
-	--color-primary: #1856ff;
+	--color-primary: #1755ff;
+	--color-primary-dark: #043dda;
 	--color-primary-transparent: #0058ff2e;
-	--color-primary-light: #2b63fb;
+	--color-primary-light: #1774ff;
 	--color-error: rgb(255, 31, 31);
 	--color-text: whitesmoke;
-	--color-text-light: rgba(255, 255, 255, 0.33);
+	--color-text-light: rgba(255, 255, 255, 0.413);
 	font-family: consolas;
 }
 
@@ -39,15 +40,13 @@ a {
 }
 
 a:hover {
-	text-decoration: underline var(--color-primary) 1px;
+	text-decoration: underline 1px;
 	color: var(--color-primary-light);
 }
 
 a[thispage] {
 	color: var(--color-primary);
 	background-color: var(--color-primary-transparent);
-	text-decoration: none;
-	cursor: default;
 }
 
 button {
@@ -143,3 +142,37 @@ textarea::placeholder {
 .error-text {
 	color: var(--color-error);
 }
+
+.loading-spinner {
+	display: none;
+	overflow: hidden;
+	height: 1.3em;
+	margin-top: -0.3em;
+	line-height: 1.5em;
+	vertical-align: text-bottom;
+}
+
+.loading-spinner::after {
+	display: inline-table;
+  	white-space: pre;
+  	text-align: left;
+	content:"*\A+\A#\A]\A|\A{\A?\A~\A+\A'";
+	animation: spin10 0.5s steps(10) infinite;
+}
+
+.htmx-request.loading-spinner {
+	display: inline-block;
+}
+
+@keyframes spin1  { to { transform: translateY( -1.5em); } }
+@keyframes spin2  { to { transform: translateY( -3.0em); } }
+@keyframes spin3  { to { transform: translateY( -4.5em); } }
+@keyframes spin4  { to { transform: translateY( -6.0em); } }
+@keyframes spin5  { to { transform: translateY( -7.5em); } }
+@keyframes spin6  { to { transform: translateY( -9.0em); } }
+@keyframes spin7  { to { transform: translateY(-10.5em); } }
+@keyframes spin8  { to { transform: translateY(-12.0em); } }
+@keyframes spin9  { to { transform: translateY(-13.5em); } }
+@keyframes spin10 { to { transform: translateY(-15.0em); } }
+@keyframes spin11 { to { transform: translateY(-16.5em); } }
+@keyframes spin12 { to { transform: translateY(-18.0em); } }

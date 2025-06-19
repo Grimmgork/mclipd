@@ -1,6 +1,6 @@
 <div class="header">
 	<div class="navbar">
-		<a thispage >clipboard</a>
+		<a hx-get="/ui/file" hx-target=".container" thispage >clipboard</a>
 		<a hx-get="/ui/upload" hx-target=".container">upload</a>
 		<a href="/data?{{etag}}" download="{{filename}}">download</a>
 		<a href="/data?{{etag}}">raw</a>
