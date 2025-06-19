@@ -1,7 +1,8 @@
 use HTTP::Server::PSGI;
-use Template::Mustache;
 use HTTP::MultiPartParser;
+use Template::Mustache;
 use JSON;
+use threads::shared;
 
 use constant PORT => 5000;
 use constant HOST => "127.0.0.1";
@@ -100,13 +101,16 @@ $server->run(\&app);
 my $INFO; # ref to hash containing info about the clipped file
 my $DATA; # array ref of chunked content of clipped file
 
+my $LOCK; # used for thread synchronization
+
 sub app {
 	my $env = shift;
-	die "not suitable for multithreading/forking!\n" if $env->{"psgi.multithread"} or $env->{"psgi.multiprocess"};
+	die "not suitable for forking webservers!\n" if $env->{"psgi.multiprocess"};
 	print $env->{REQUEST_METHOD}, " - ", $env->{PATH_INFO}, "\n";
 
 	my $res;
 	eval {
+		lock($LOCK) if $env->{"psgi.multithread"};  # synchronize threads if required
 		$res = route($env, $routes);
 	};
 	if ($@) {
