@@ -1,0 +1,22 @@
+<div class="header">
+	<div class="navbar">
+		<a thispage >clipboard</a>
+		<a hx-get="/ui/upload" hx-target=".container">upload</a>
+		<a href="/data?{{etag}}" download="{{filename}}">download</a>
+		<a href="/data?{{etag}}">raw</a>
+	</div>
+	<div class="header-infoline">
+		<span>{{time}} {{filename}}</span>
+		<span class="header-infoline-filesize">{{size}}</span>
+	</div>
+</div>
+<div class="content">
+	{{#embed}}
+	<div class="content-embed">{{embed}}</div>
+	{{/embed}}
+	{{^embed}}
+	<a href="/data?{{etag}}">
+		{{filename}}
+	</a>
+	{{/embed}}
+</div>

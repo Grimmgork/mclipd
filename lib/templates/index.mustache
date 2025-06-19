@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="/style.css">
+	<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+	<title>mclip</title>
+</head>
+<body>
+<div class="container">
+	{{> file}}
+</div>
+<script>
+// const input_file = undefined; // document.querySelector('#file');
+// const input_text = undefined; // document.querySelector('#textarea');
+// const err = undefined; //  document.querySelector('#error');
+// const btn_upload = undefined // document.querySelector('#btn_upload');
+// const btn_clear = undefined // .querySelector('#btn_clear');
+
+// input_file.addEventListener('change', event => {
+// 	input_file.disabled = true;
+// 	input_text.disabled = true;
+// 	fetch('/data', {
+// 		method: 'post',
+// 		body: event.target.files[0],
+// 		headers: new Headers({
+// 			"Content-Type": input_file.files[0].type,
+// 			"Content-Disposition" : "filename=\"" + input_file.files[0].name + "\""
+// 		})
+// 	}).then(res => {
+// 		if(res.status == 200){
+// 			window.location.href = '/ui';
+// 			return 0;
+// 		}
+// 		input_file.disabled = false;
+// 		input_text.disabled = false;
+//      	err.innerHTML = "error: " + res.status;
+// 	})
+// })
+
+// // clear textarea
+// btn_clear.addEventListener('click', event => {
+// 	input_text.value = "";
+// 	err.innerHTML = "";
+// });
+
+// // upload text file
+// btn_upload.addEventListener('click', event => {
+// 	input_file.disabled = true;
+// 	input_text.disabled = true;
+// 	fetch('/data', {
+// 		method: 'post',
+// 		body: input_text.value,
+// 		headers: new Headers({
+// 			"Content-Type": "text/plain"
+// 		})
+// 	}).then(res => {
+// 		if(res.status == 200){
+// 			window.location.href = '/ui';
+// 			return 0;
+// 		}
+// 		input_file.disabled = false;
+// 		input_text.disabled = false;
+//      	err.innerHTML = "error: " + res.status;
+// 	})
+// });
+</script>
+</body>
+</html>
