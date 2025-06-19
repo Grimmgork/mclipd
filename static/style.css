@@ -23,6 +23,7 @@
 	--color-text: whitesmoke;
 	--color-text-light: rgba(255, 255, 255, 0.413);
 	font-family: consolas;
+	font-size: 1em;
 }
 
 body {
@@ -86,6 +87,7 @@ textarea {
 	padding: 3px;
 	color: var(--color-text);
 	background-color: var(--color-backdrop);
+	font-size: 1rem;
 }
 
 textarea::placeholder {

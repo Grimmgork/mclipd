@@ -1,6 +1,5 @@
 package metaclip;
 
-use HTTP::Server::PSGI;
 use HTTP::MultiPartParser;
 use Template::Mustache;
 use JSON;
@@ -36,7 +35,7 @@ my $routes = [
 
 	["POST", "/ui/data", sub {
 		my $env = shift;
-		my ($mime, $filename, $length, $chunks) = parse_multipart_form_data($env, "data");
+		my ($mime, $filename, $length, $chunks) = parse_form_data($env, "data");
 		cmd_upload_data($mime, $filename, $length, $chunks);
 		return res_template("templates/file");
 	}],
@@ -150,7 +149,7 @@ sub cmd_upload_data {
 		filename => $filename || $time,
 		mimetype => $mime || "application/octet-stream",
 		length   => $length,
-		embed    => (is_mime_embedable($mime) and @$DATA == 1 and is_plaintext($DATA->[0])),
+		embed    => (is_mime_embedable($mime) and @$DATA == 1),
 		etag     => $time
 	};
 }
@@ -160,11 +159,11 @@ sub cmd_delete_data {
 	$INFO = undef;
 }
 
-sub parse_multipart_form_data {
+sub parse_form_data {
 	my $env = shift;
 	my $name = shift;
 	return (undef, undef, 0, []) unless $name;
-	
+
 	my ($mime, $boundary) = $env->{CONTENT_TYPE} =~ /([a-zA-Z-\/]+);\s+(?:boundary=([0-9a-zA-Z'()+_,.\-\/:=?]+))$/;
 	return (undef, undef, 0, []) unless $mime eq "multipart/form-data";
 	
@@ -191,7 +190,9 @@ sub parse_multipart_form_data {
 			$state = 1;
 			$size = 0;
 			$chunks = [];
-			$mime = $hash{'Content-Type'};
+			
+			# if no content type in a multipart form is given, it can be interpreted as text
+			$mime = $hash{'Content-Type'} || 'text/plain';
 			$filename = $disposition_values->{'filename'};
 		}
 		else
@@ -362,3 +363,4 @@ sub res_file {
 	close $fh;
 	return [200, ['cache-control' => 'max-age=3600'], $chunks];
 }
+
